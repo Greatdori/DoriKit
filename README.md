@@ -1,17 +1,10 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Artwork/IconWithText~dark.png">
-  <img src="Artwork/IconWithText.png" alt="DoriKit logo" height="70">
-</picture>
-<br />
-<br />
-<picture>
   <source media="(prefers-color-scheme: dark)" srcset="Artwork/DoriKitIconWithText~dark.png">
   <img src="Artwork/DoriKitIconWithText.png" alt="DoriKit logo" height="70">
 </picture>
 
-# Greatdori!
+# DoriKit
 
-Greatdori includes DoriKit library, iOS app and watchOS app.
 DoriKit allows you to fetch data from Bestdori API in Swifty way:
 you can get raw data from the API,
 or let DoriKit to process data from the API for you.
@@ -20,27 +13,25 @@ and provide native experience to Bestdori.
 
 | **Target** | **Status** |
 |---:|:---:|
-| DoriKit             | ![DoriKit Build Status](https://img.shields.io/github/actions/workflow/status/WindowsMEMZ/Greatdori/build-dorikit.yml)|
-| Greatdori           | ![Greatdori Build Status](https://img.shields.io/github/actions/workflow/status/WindowsMEMZ/Greatdori/build-greatdori.yml)|
-| Greatdori Watch App | ![Greatdori Watch App Build Status](https://img.shields.io/github/actions/workflow/status/WindowsMEMZ/Greatdori/build-greatdori-watch.yml)|
+| DoriKit             | ![DoriKit Build Status](https://img.shields.io/github/actions/workflow/status/Greatdori/DoriKit/build-dorikit.yml)|
 
 ## Using DoriKit
 ### Xcode Project (Recommended)
 1. Clone this project into your project folder:
     ```sh
-    git clone https://github.com/WindowsMEMZ/Greatdori.git
+    git clone https://github.com/Greatdori/DoriKit.git
     ```
     Use `git submodule` if you want to manage versions better.
 2. Update submodules for Greatdori! project:
     ```sh
-    cd Greatdori
+    cd DoriKit
     git submodule update --init --recursive
     ```
 3. Install CMake if you don't have:
     ```sh
     brew install cmake
     ```
-4. Drag `Greatdori.xcodeproj` and drop it into the project navigator in Xcode.
+4. Drag `DoriKit.xcodeproj` and drop it into the project navigator in Xcode.
 5. Go to project editor for your project, select a target,
     add DoriKit in *Frameworks, Libraries and Embedded Content* section.
     
@@ -50,7 +41,7 @@ and provide native experience to Bestdori.
 
 ### XCFramework
 Download the `DoriKit.xcframework` from
-[releases](https://github.com/WindowsMEMZ/Greatdori/releases/latest)
+[releases](https://github.com/DoriKit/DoriKit/releases/latest)
 then link it to your project.
 
 Or you can build an XCFramework by your own as described
@@ -60,7 +51,7 @@ in the [Build XCFramework](#build-xcframework) section.
 Add the following dependency to your `Package.swift` file:
 
 ```swift
-.package(url: "https://github.com/WindowsMEMZ/Greatdori.git", branch: "main"),
+.package(url: "https://github.com/Greatdori/DoriKit.git", branch: "main"),
 ```
 
 Then add the dependency to targets you're going to use it:
@@ -69,7 +60,7 @@ Then add the dependency to targets you're going to use it:
 .target(
     name: "MyTarget", 
     dependencies: [
-        .product(name: "DoriKit", package: "Greatdori"),
+        .product(name: "DoriKit"),
     ]
 ),
 ```
@@ -89,49 +80,15 @@ Then add the dependency to targets you're going to use it:
     will get them online instead.
 - **Not available**: Offline asset APIs.
 
-## Building
-Xcode 26.0 and Swift 6.2+ is required for building this project.
-
-CMake is required for building from Xcode Project,
-you can install it by Homebrew if you don't have one:
-
-```sh
-brew install cmake
-```
-
-Open `Greatdori.xcodeproj`, then select a scheme you want to build.
-You can also use `swift build` to build DoriKit from Package.swift.
-However, functionality of DoriKit is limited if it's built as a Swift Package.
-
-### Build XCFramework
-An XCFramework allows you to use DoriKit in your project easily.
-Generally, we attach a `DoriKit.xcframework` with each releases.
-You can build a XCFramework of DoriKit by your own using `build-xcframework`
-script like the following:
-
-```sh
-$ ./BuildTool/build-xcframework
-```
-
-Once the build succeeded, you can find `DoriKit.xcframework` in the `build/` folder.
-
 ### Schemes
 There're several schemes in Greatdori! project:
 
-- **Greatdori**: The Greatdori! app for iOS, iPadOS and macOS;
-- **Greatdori Widgets**: Widget extension for **Greatdori** scheme;
-- **Greatdori Watch App**: The Greatdori! app for watchOS;
-- **Greatdori Watch Widgets**: Widget extension for **Greatdori Watch App** scheme;
-- **BuiltinCardCollections**: Built-in card collection for widgets;
 - **DoriKit**: The DoriKit framework;
 - **DoriAssetShims** Objective-C shims for offline asset features in DoriKit;
 - **DoriKitMacros**: Implementations of macros in DoriKit;
 - **DoriKitTests**: Tests for DoriKit;
 - **DoriEmoji**: Emoji collections for community UI of DoriKit;
 - **DoriResource**: Commonly used binary resources for DoriKit;
-- **Greatdori Installer**: Generates a `pkg` installer for macOS app;
-- **CardCollectionGen**: A CLI tool which generates built-in card collections;
-- **GreatLyrics**: A tool for making lyrics file of songs.
 - **libgit2**: LibGit2 and its dependencies, required for *DoriAssetShims*.
 
 Besides, some targets have a corresponding *Without Pre-Cache* scheme,
@@ -149,26 +106,19 @@ If you're experiencing a poor network connection
 that makes you can't generate pre-cache successfully,
 you can opt-out it by building your target from `Without Pre-Cache` scheme.
 
-### Code Signing
-All development teams of each targets are set to `Yuxuan Chen (8CZ4JT4F3M)`
-which makes it easier for our CI runs and distribution workflows.
-You have to change it to your own team before building,
-or choose *None* if you build it only for simulator or macOS.
-(And don't forget to change it back if you'd like to open a pull request!)
-
-## Contributing to Greatdori!
+## Contributing to DoriKit
 Contributions to Greatdori! are welcomed and encouraged!
 Fork the project, make changes and open your pull requests!
 
 If you're experiencing some bugs, or have any suggestion to Greatdori!,
 filing an issue for it is also welcomed.
 
-### `Greatdori.xcodeproj` & `Package.swift`
-`Greatdori.xcodeproj` is the main project file of Greatdori!,
-we suggest you to open this project file in Xcode to make changes to Greatdori!.
+### `DoriKit.xcodeproj` & `Package.swift`
+`DoriKit.xcodeproj` is the main project file of DoriKit,
+we suggest you to open this project file in Xcode to make changes to DoriKit.
 
 `Package.swift` makes it easier to embed DoriKit in other projects,
-and should not be used for editing code of Greatdori!,
+and should not be used for editing code of DoriKit,
 because `xcodeproj` file maintains structures of all files in this project.
 
 ### Targets Relationship
@@ -291,7 +241,7 @@ options:
 </details>
 
 ### Testing
-You have to run testing by `DoriKitTests` scheme in Greatdori.xcodeproj (instead of Package.swift).
+You have to run testing by `DoriKitTests` scheme in DoriKit.xcodeproj (instead of Package.swift).
 
 ## License
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE.txt) file for details.
