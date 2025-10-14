@@ -86,15 +86,16 @@ func updateLocale(datas: [String], forLocale locale: DoriLocale, to destination:
             
             // 1. Pull
             let script = #"""
-echo "Debug Git Pull 111"
+echo "[%][Git Pull][\#(locale.rawValue)/\#(branch)] Pull process starts."
+
 git config --global --add safe.directory "\#(destination.absoluteString.dropURLPrefix())"
 cd "\#(destination.absoluteString.dropURLPrefix())"
 
-echo "Debug Git Pull 222"
+echo "[%][Git Pull][\#(locale.rawValue)/\#(branch)] Directory set to \#(destination.absoluteString.dropURLPrefix())."
 
 git checkout "\#(locale.rawValue)/\#(branch)"
 
-echo "Debug Git Pull 333"
+echo "[%][Git Pull][\#(locale.rawValue)/\#(branch)] Checked out."
 
 # Retry git pull --rebase up to 10 times
 for i in {1..10}; do
@@ -103,7 +104,7 @@ for i in {1..10}; do
   fi
 done
 
-echo "Debug Git Pull 444"
+echo "[%][Git Pull][\#(locale.rawValue)/\#(branch)] Git pulled."
 """#
             let (status, output) = try await runBashScript(script, commandName: "Git Pull", viewFailureAsFatalError: false)
             print("[✓][Update][\(locale.rawValue)/\(branch)] Git pulled. Status \(status).")
@@ -131,18 +132,27 @@ echo "Debug Git Pull 444"
             // 3. Push
             do {
                 let script = #"""
+echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Push script starts."
 git config --global --add safe.directory "\#(destination.absoluteString.dropURLPrefix())"
 cd "\#(destination.absoluteString.dropURLPrefix())"
+
+echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Directory set to \#(destination.absoluteString.dropURLPrefix())."
 
 git config user.name "Togawa Sakiko"
 git config user.email "sakiko@darock.top"
 git remote set-url origin https://x-access-token:\#(token)@github.com/Greatdori/Greatdori-OfflineResBundle.git
 
+echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Github user verification set."
+
 git checkout "\#(locale.rawValue)/\#(branch)"
+
+echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Checked out."
 
 git add .
 git commit -m "Auto update \#(locale.rawValue)/\#(branch) ($(date +"%Y-%m-%d"))" || true
 for i in {1..10}; do git push && break; done
+
+echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Commited & Pushed."
 """#
                 let (status, output) = try await runBashScript(script, commandName: "Git Push", viewFailureAsFatalError: false)
                 print("[✓][Update][\(locale.rawValue)/\(branch)] Git pushed. Status \(status).")

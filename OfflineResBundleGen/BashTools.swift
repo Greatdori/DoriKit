@@ -107,21 +107,13 @@ func runTool(tool: URL = URL(fileURLWithPath: "/usr/bin/env"), arguments: [Strin
 
 @MainActor
 func runBashScript(_ inputScript: String, commandName: String? = nil, reportBashContent: Bool = true, expectedStatus: Int32? = 0, useEnhancedErrorCatching: Bool = true, viewFailureAsFatalError: Bool) async throws -> (status: Int32, output: Data) {
-    
-    // DEBUG
-//    let something = try await runTool(arguments: ["bash", "-lc", "echo Hello; echo Error >&2"])
-//    print(String(data: something.output, encoding: .utf8)!)
 
     let enhancedErrorCatchingMethod = #"""
 set -euo pipefail
 
-echo "Debug 002"
-
 tmp_err=$(mktemp)
 exec 2> >(tee "$tmp_err" >&2)
 # exec > >(tee "$tmp_out") 2> >(tee "$tmp_err" >&2)
-
-echo "Trees"
 
 trap 'rc=$?;
       err_line=${BASH_LINENO[0]};
