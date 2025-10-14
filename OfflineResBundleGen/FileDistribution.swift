@@ -1,6 +1,6 @@
 //===---*- Greatdori! -*---------------------------------------------------===//
 //
-// FileDistibution.swift
+// FileDistribution.swift
 //
 // This source file is part of the Greatdori! open source project
 //
@@ -106,7 +106,7 @@ done
 
 echo "[%][Git Pull][\#(locale.rawValue)/\#(branch)] Git pulled."
 """#
-            let (status, output) = try await runBashScript(script, commandName: "Git Pull", viewFailureAsFatalError: false)
+            let (status, output) = try await runBashScript(script, commandName: "Git Pull", viewFailureAsFatalError: true)
             print("[✓][Update][\(locale.rawValue)/\(branch)] Git pulled. Status \(status).")
             fflush(stdout)
             
@@ -154,7 +154,7 @@ for i in {1..10}; do git push && break; done
 
 echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Commited & Pushed."
 """#
-                let (status, output) = try await runBashScript(script, commandName: "Git Push", viewFailureAsFatalError: false)
+                let (status, output) = try await runBashScript(script, commandName: "Git Push", viewFailureAsFatalError: true)
                 print("[✓][Update][\(locale.rawValue)/\(branch)] Git pushed. Status \(status).")
                 fflush(stdout)
             } catch {

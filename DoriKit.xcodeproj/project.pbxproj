@@ -160,7 +160,7 @@
 		8CFEF5BF2E4DD5F00017FF66 /* FrontendLoginCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFEF5BE2E4DD5E60017FF66 /* FrontendLoginCampaign.swift */; };
 		E924AB9E2E99EB17003BF482 /* NewsParse.swift in Sources */ = {isa = PBXBuildFile; fileRef = E924AB9D2E99EB14003BF482 /* NewsParse.swift */; };
 		E924ABA02E99F9F0003BF482 /* BashTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = E924AB9F2E99F9EC003BF482 /* BashTools.swift */; };
-		E924ABA42E9A0672003BF482 /* FileDistibution.swift in Sources */ = {isa = PBXBuildFile; fileRef = E924ABA32E9A0647003BF482 /* FileDistibution.swift */; };
+		E924ABA42E9A0672003BF482 /* FileDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = E924ABA32E9A0647003BF482 /* FileDistribution.swift */; };
 		E935FF072E9CA6C900A1ECD1 /* InfoDetermination.swift in Sources */ = {isa = PBXBuildFile; fileRef = E935FF062E9CA6BE00A1ECD1 /* InfoDetermination.swift */; };
 		E9A67EB42E72AF160047E6BA /* Sorter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A67EB32E72AF160047E6BA /* Sorter.swift */; };
 		E9EFF2B82E61BEAB00991940 /* MatchedFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9EFF2B72E61BEA800991940 /* MatchedFilters.swift */; };
@@ -389,7 +389,7 @@
 		E924AB9D2E99EB14003BF482 /* NewsParse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsParse.swift; sourceTree = "<group>"; };
 		E924AB9F2E99F9EC003BF482 /* BashTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BashTools.swift; sourceTree = "<group>"; };
 		E924ABA22E99FB07003BF482 /* Apple-Sample-Code-License.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Apple-Sample-Code-License.pdf"; sourceTree = "<group>"; };
-		E924ABA32E9A0647003BF482 /* FileDistibution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDistibution.swift; sourceTree = "<group>"; };
+		E924ABA32E9A0647003BF482 /* FileDistribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDistribution.swift; sourceTree = "<group>"; };
 		E935FF062E9CA6BE00A1ECD1 /* InfoDetermination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoDetermination.swift; sourceTree = "<group>"; };
 		E9A67EB32E72AF160047E6BA /* Sorter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sorter.swift; sourceTree = "<group>"; };
 		E9EFF2B72E61BEA800991940 /* MatchedFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchedFilters.swift; sourceTree = "<group>"; };
@@ -884,7 +884,7 @@
 				8C7F176F2E5C082B0040C206 /* APIData.swift */,
 				8C8E43FF2E5DAD46005590F0 /* DoriResource.swift */,
 				E924AB9D2E99EB14003BF482 /* NewsParse.swift */,
-				E924ABA32E9A0647003BF482 /* FileDistibution.swift */,
+				E924ABA32E9A0647003BF482 /* FileDistribution.swift */,
 				E935FF062E9CA6BE00A1ECD1 /* InfoDetermination.swift */,
 				E924AB9F2E99F9EC003BF482 /* BashTools.swift */,
 				E924ABA22E99FB07003BF482 /* Apple-Sample-Code-License.pdf */,
@@ -1564,7 +1564,7 @@
 				8C0D89BE2E537799004BD1D6 /* LimitedTaskQueue.swift in Sources */,
 				8C0D89B62E536AB2004BD1D6 /* StandardError.swift in Sources */,
 				8C0D89BA2E536DD5004BD1D6 /* Networking.swift in Sources */,
-				E924ABA42E9A0672003BF482 /* FileDistibution.swift in Sources */,
+				E924ABA42E9A0672003BF482 /* FileDistribution.swift in Sources */,
 				E924ABA02E99F9F0003BF482 /* BashTools.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
