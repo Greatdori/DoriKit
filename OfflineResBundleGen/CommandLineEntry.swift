@@ -99,40 +99,4 @@ func debugProcess(output: URL, token: String?, lastID: Int?) async {
     } catch {
         print("updateAssets failure: \(error)")
     }
-        
-        
-    do {
-        // 0. Initialization
-        print("[$][Debug][jp/basic] Started with unknown number of items.")
-        let startTime = CFAbsoluteTimeGetCurrent()
-        var updatedItemsCount = 0
-        fflush(stdout)
-        
-        // 1. Pull
-        let script = #"""
-echo "Debug Git Pull 111"
-git config --global --add safe.directory "\#(output.absoluteString.dropURLPrefix())"
-cd "\#(output.absoluteString.dropURLPrefix())"
-
-echo "Debug Git Pull 222"
-
-git checkout "jp/basic"
-
-echo "Debug Git Pull 333"
-
-# Retry git pull --rebase up to 10 times
-for i in {1..10}; do
-  if git pull --rebase; then
-    break
-  fi
-done
-
-echo "Debug Git Pull 444"
-"""#
-        let (status, output) = try await runBashScript(script, commandName: "Git Pull", reportBashContent: false,  expectedStatus: nil, useEnhancedErrorCatching: false, viewFailureAsFatalError: false)
-        print("[✓][Update][jp/basic] Git pulled. Status \(status).")
-        fflush(stdout)
-    } catch {
-        print("[×][Update][jp/basic] Git pull failed. Error: \(error).")
-    }
 }
