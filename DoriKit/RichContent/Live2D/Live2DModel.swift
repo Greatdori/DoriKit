@@ -15,6 +15,7 @@
 #if canImport(SwiftUI) && canImport(WebKit)
 
 import Foundation
+internal import Alamofire
 internal import SwiftyJSON
 
 internal struct Live2DModel {
@@ -55,8 +56,8 @@ internal struct Live2DModel {
                 let filePath = NSHomeDirectory() + "/tmp/\(bundleName.components(separatedBy: "/").last!)_\(fileName)"
                 if !FileManager.default.fileExists(atPath: filePath) {
                     return await withCheckedContinuation { continuation in
-                        DispatchQueue(label: "com.memz233.DoriKit.Live2DModel-File-Preload", qos: .userInitiated).async {
-                            if let data = try? Data(contentsOf: absoluteURL),
+                        AF.request(absoluteURL).response { response in
+                            if let data = response.data,
                                (try? data.write(to: URL(filePath: filePath))) != nil {
                                 continuation.resume(returning: filePath)
                             } else {
