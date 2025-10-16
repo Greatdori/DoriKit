@@ -522,7 +522,8 @@ extension DoriAPI {
                                 connections: $0.1["connections"].map {
                                     .init(
                                         lane: $0.1["lane"].doubleValue,
-                                        beat: $0.1["beat"].doubleValue
+                                        beat: $0.1["beat"].doubleValue,
+                                        flick: $0.1["flick"].bool ?? false
                                     )
                                 }
                             )
@@ -533,7 +534,8 @@ extension DoriAPI {
                                     .init(
                                         lane: $0.1["lane"].doubleValue,
                                         beat: $0.1["beat"].doubleValue,
-                                        hidden: $0.1["hidden"].bool ?? false
+                                        hidden: $0.1["hidden"].bool ?? false,
+                                        flick: $0.1["flick"].bool ?? false
                                     )
                                 }
                             )
@@ -856,6 +858,7 @@ extension DoriAPI.Song {
             public struct Connection: Sendable, Hashable, DoriCache.Cacheable {
                 public var lane: Double
                 public var beat: Double
+                public var flick: Bool
             }
         }
         public struct SlideData: Sendable, Hashable, DoriCache.Cacheable {
@@ -865,6 +868,7 @@ extension DoriAPI.Song {
                 public var lane: Double
                 public var beat: Double
                 public var hidden: Bool
+                public var flick: Bool
             }
         }
         public struct DirectionalData: Sendable, Hashable, DoriCache.Cacheable {
@@ -873,6 +877,7 @@ extension DoriAPI.Song {
             public var direction: Direction
             public var width: Int
             
+            @frozen
             public enum Direction: String, Sendable, Hashable, DoriCache.Cacheable {
                 case left = "Left"
                 case right = "Right"
