@@ -459,256 +459,253 @@ private func setupWebView(_ webView: WKWebView, with model: Live2DModel, env: En
         <!DOCTYPE html>
         <html>
         <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body onload="Simple()" style="margin: 0; height: 100%; overflow: hidden;">
-        <canvas id="glcanvas" style="width: 100vmin; height: 100vmin; position: absolute;"></canvas>
-        <script>\(_live2dLibJS)</script>
-        <script>\(_live2dFrameworkJS)</script>
-        <script>
-        // Environment
-        var eyeBlinkEnabled = \(env.l2dEyeBlinkEnabled);
-        var breathEnabled = \(env.l2dBreathEnabled);
-        var swayEnabled = \(env.l2dSwayEnabled);
-        var isAnimationPaused = \(env.l2dIsPaused);
-        var lipSyncValue = \(env.l2dLipSyncValue != nil ? "\(env.l2dLipSyncValue!)" : "null");
-        
-        var gl = null;
-        var canvas = document.getElementById("glcanvas");
-        \(env.l2dVSyncEnabled ? {
-        #if os(macOS)
-        let fps = NSScreen.main?.maximumFramesPerSecond ?? 120
-        #else
-        let fps = UIScreen.main.maximumFramesPerSecond
-        #endif
-        return """
-        let lastFrameTime = 0;
-        const targetFPS = \(fps);
-        const frameDuration = 1000 / targetFPS;
-        function tick(time) {
-            if (!time || time - lastFrameTime >= frameDuration) {
-                if (time) {
-                    lastFrameTime = time;
-                }
-                Simple.draw(gl);
-            }
-            if (isAnimationPaused) {
-                return;
-            }
-            var requestAnimationFrame =
-                window.requestAnimationFrame ||
-                window.webkitRequestAnimationFrame;
-            requestAnimationFrame(tick , canvas);
-        };
-        """
-        }() : """
-        function tick() {
-            Simple.draw(gl);
-            if (isAnimationPaused) {
-                return;
-            }
-            var requestAnimationFrame =
-                window.requestAnimationFrame ||
-                window.webkitRequestAnimationFrame;
-            requestAnimationFrame(tick , canvas);
-        };
-        """)
-        var Simple = function() {
-        this.live2DModel = null;
-        this.requestID = null;
-        this.loadLive2DCompleted = false;
-        this.initLive2DCompleted = false;
-        this.loadedImages = [];
-        this.modelDef = {
-            "model":"file://\(await modelFile.value ?? "")",
-            "textures":[\(await textureArrayLiteral(from: textureFiles))]
-        };
-        this.motionManager = new L2DMotionManager();
-        this.expressionManager = new L2DMotionManager();
-        this.eyeBlink = new L2DEyeBlink();
-        Live2D.init();
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = canvas.clientWidth * dpr;
-        canvas.height = canvas.clientHeight * dpr;
-        canvas.addEventListener("webglcontextlost", function(e) {
-            Simple.myerror("context lost");
-            loadLive2DCompleted = false;
-            initLive2DCompleted = false;
-            var cancelAnimationFrame =
-                window.cancelAnimationFrame ||
-                window.mozCancelAnimationFrame;
-            cancelAnimationFrame(requestID);
-            e.preventDefault();
-        }, false);
-        canvas.addEventListener("webglcontextrestored" , function(e){
-            Simple.myerror("webglcontext restored");
-            Simple.initLoop(canvas);
-        }, false);
-        Simple.initLoop(canvas);
-        };
-        
-        Simple.initLoop = function(canvas) {
-            var para = {
-                premultipliedAlpha : true,
-                alpha : false
-            };
-            gl = Simple.getWebGLContext(canvas, para);
-            if (!gl) {
-                console.log("Failed to create WebGL context.");
-                return;
-            }
-            gl.viewport(0, 0, canvas.width, canvas.height);
-            Live2D.setGL(gl);
-            Simple.loadBytes(modelDef.model, function(buf){
-                live2DModel = Live2DModelWebGL.loadModel(buf);
-            });
-            var loadCount = 0;
-            for(var i = 0; i < modelDef.textures.length; i++){
-                (function ( tno ){
-                    loadedImages[tno] = new Image();
-                    loadedImages[tno].src = modelDef.textures[tno];
-                    loadedImages[tno].onload = function(){
-                        if((++loadCount) == modelDef.textures.length) {
-                            loadLive2DCompleted = true;
+            <canvas id="glcanvas" style="width: 100vmin; height: 100vmin; position: absolute;"></canvas>
+            <script>\(_live2dLibJS)</script>
+            <script>\(_live2dFrameworkJS)</script>
+            <script>
+                // Environment
+                var eyeBlinkEnabled = \(env.l2dEyeBlinkEnabled);
+                var breathEnabled = \(env.l2dBreathEnabled);
+                var swayEnabled = \(env.l2dSwayEnabled);
+                var isAnimationPaused = \(env.l2dIsPaused);
+                var lipSyncValue = \(env.l2dLipSyncValue != nil ? "\(env.l2dLipSyncValue!)" : "null");
+                
+                var gl = null;
+                var canvas = document.getElementById("glcanvas");
+                \(env.l2dVSyncEnabled ? {
+                #if os(macOS)
+                let fps = NSScreen.main?.maximumFramesPerSecond ?? 120
+                #else
+                let fps = UIScreen.main.maximumFramesPerSecond
+                #endif
+                return """
+                let lastFrameTime = 0;
+                const targetFPS = \(fps);
+                const frameDuration = 1000 / targetFPS;
+                function tick(time) {
+                    if (!time || time - lastFrameTime >= frameDuration) {
+                        if (time) {
+                            lastFrameTime = time;
+                        }
+                        Simple.draw(gl);
+                    }
+                    if (isAnimationPaused) {
+                        return;
+                    }
+                    var requestAnimationFrame =
+                        window.requestAnimationFrame ||
+                        window.webkitRequestAnimationFrame;
+                    requestAnimationFrame(tick , canvas);
+                };
+                """
+                }() : """
+                function tick() {
+                    Simple.draw(gl);
+                    if (isAnimationPaused) {
+                        return;
+                    }
+                    var requestAnimationFrame =
+                        window.requestAnimationFrame ||
+                        window.webkitRequestAnimationFrame;
+                    requestAnimationFrame(tick , canvas);
+                };
+                """)
+                var Simple = function() {
+                    this.live2DModel = null;
+                    this.requestID = null;
+                    this.loadLive2DCompleted = false;
+                    this.initLive2DCompleted = false;
+                    this.loadedImages = [];
+                    this.modelDef = {
+                        "model":"file://\(await modelFile.value ?? "")",
+                        "textures":[\(await textureArrayLiteral(from: textureFiles))]
+                    };
+                    this.motionManager = new L2DMotionManager();
+                    this.expressionManager = new L2DMotionManager();
+                    this.eyeBlink = new L2DEyeBlink();
+                    Live2D.init();
+                    const dpr = window.devicePixelRatio || 1;
+                    canvas.width = canvas.clientWidth * dpr;
+                    canvas.height = canvas.clientHeight * dpr;
+                    canvas.addEventListener("webglcontextlost", function(e) {
+                        Simple.myerror("context lost");
+                        loadLive2DCompleted = false;
+                        initLive2DCompleted = false;
+                        var cancelAnimationFrame =
+                            window.cancelAnimationFrame ||
+                            window.mozCancelAnimationFrame;
+                        cancelAnimationFrame(requestID);
+                        e.preventDefault();
+                    }, false);
+                    canvas.addEventListener("webglcontextrestored" , function(e){
+                        Simple.myerror("webglcontext restored");
+                        Simple.initLoop(canvas);
+                    }, false);
+                    Simple.initLoop(canvas);
+                };
+                
+                Simple.initLoop = function(canvas) {
+                    var para = {
+                        premultipliedAlpha : true,
+                        alpha : false
+                    };
+                    gl = Simple.getWebGLContext(canvas, para);
+                    if (!gl) {
+                        console.log("Failed to create WebGL context.");
+                        return;
+                    }
+                    gl.viewport(0, 0, canvas.width, canvas.height);
+                    Live2D.setGL(gl);
+                    Simple.loadBytes(modelDef.model, function(buf){
+                        live2DModel = Live2DModelWebGL.loadModel(buf);
+                    });
+                    var loadCount = 0;
+                    for(var i = 0; i < modelDef.textures.length; i++){
+                        (function ( tno ){
+                            loadedImages[tno] = new Image();
+                            loadedImages[tno].src = modelDef.textures[tno];
+                            loadedImages[tno].onload = function(){
+                                if((++loadCount) == modelDef.textures.length) {
+                                    loadLive2DCompleted = true;
+                                }
+                            }
+                            loadedImages[tno].onerror = function() {
+                                Simple.myerror("Failed to load image : " + modelDef.textures[tno]);
+                            }
+                        })( i );
+                    }
+                    tick();
+                };
+                var lastValuePost = 0;
+                Simple.draw = function(gl) {
+                    if (!live2DModel || !loadLive2DCompleted)
+                        return;
+                    if (!initLive2DCompleted) {
+                        initLive2DCompleted = true;
+                        for (var i = 0; i < loadedImages.length; i++) {
+                            var texName = Simple.createTexture(gl, loadedImages[i]);
+                            live2DModel.setTexture(i, texName);
+                        }
+                        loadedImages = null;
+                        var s = \(env.l2dZoomFactor ?? 1.75) / live2DModel.getCanvasWidth();
+                        var matrix4x4 = \(env.l2dCoordinateMatrix ?? """
+                        [
+                            s, 0, 0, 0,
+                            0,-s, 0, 0,
+                            0, 0, 1, 0,
+                            -7/8, 6/5, 0, 1
+                        ]
+                        """);
+                        live2DModel.setMatrix(matrix4x4);
+                    }
+                    
+                    gl.clearColor(0.0 , 0.0 , 0.0 , 0.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    
+                    live2DModel.loadParam();
+                    if (!motionManager.isFinished()) {
+                        motionManager.updateParam(live2DModel);
+                    }
+                    live2DModel.saveParam();
+                    if (!expressionManager.isFinished()) {
+                        expressionManager.updateParam(live2DModel);
+                    }
+                    
+                    if (eyeBlinkEnabled) {
+                        eyeBlink.updateParam(live2DModel);
+                    }
+                    
+                    let seed = (new Date).valueOf() / 1e3 * 2 * Math.PI || 0;
+                    
+                    if (breathEnabled) {
+                        live2DModel.setParamFloat("PARAM_BREATH", .5 + .5 * Math.sin(seed / 3.2345), 1);
+                    }
+                    
+                    if (swayEnabled) {
+                        live2DModel.setParamFloat("PARAM_ANGLE_X", 15 * Math.sin(seed / 6.5345) * .5, .5);
+                        live2DModel.setParamFloat("PARAM_ANGLE_Y", 8 * Math.sin(seed / 3.5345) * .5, .5);
+                        live2DModel.setParamFloat("PARAM_ANGLE_Z", 10 * Math.sin(seed / 5.5345) * .5, .5);
+                        live2DModel.setParamFloat("PARAM_BODY_ANGLE_X", 4 * Math.sin(seed / 15.5345) * .5, .5)
+                    }
+                    
+                    if (lipSyncValue) {
+                        live2DModel.setParamFloat("PARAM_MOUTH_OPEN_Y", lipSyncValue);
+                    }
+                    
+                    live2DModel.update();
+                    live2DModel.draw();
+                    
+                    let date = (new Date).valueOf()
+                    if (date - lastValuePost >= 80) {
+                        lastValuePost = date;
+                        window.webkit.messageHandlers.paramHandler.postMessage(JSON.stringify(
+                            live2DModel.getModelImpl()._$E2()._$4S.map((function(e) {
+                                return {
+                                    id: e._$wL.id,
+                                    val: live2DModel.getParamFloat(e._$wL.id),
+                                    min: e._$TT,
+                                    max: e._$LT,
+                                    def: e._$FS
+                                }
+                            }))
+                        ));
+                    }
+                };
+                Simple.getWebGLContext = function(canvas) {
+                    var NAMES = [ "webgl" , "experimental-webgl" , "webkit-3d" , "moz-webgl"];
+                    var param = {
+                        alpha : true,
+                        premultipliedAlpha : true
+                    };
+                    for( var i = 0; i < NAMES.length; i++ ){
+                        try{
+                            var ctx = canvas.getContext( NAMES[i], param );
+                            if( ctx ) return ctx;
+                        }
+                        catch(e){}
+                    }
+                    return null;
+                };
+                Simple.createTexture = function(gl, image) {
+                    var texture = gl.createTexture();
+                    if (!texture) {
+                        mylog("Failed to generate gl texture name.");
+                        return -1;
+                    }
+                    if (live2DModel.isPremultipliedAlpha() == false){
+                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
+                    }
+                    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+                    gl.activeTexture( gl.TEXTURE0 );
+                    gl.bindTexture( gl.TEXTURE_2D , texture );
+                    gl.texImage2D( gl.TEXTURE_2D , 0 , gl.RGBA , gl.RGBA , gl.UNSIGNED_BYTE , image);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+                    gl.generateMipmap(gl.TEXTURE_2D);
+                    gl.bindTexture( gl.TEXTURE_2D , null );
+                    return texture;
+                };
+                Simple.loadBytes = function(path, callback) {
+                    var request = new XMLHttpRequest();
+                    request.open("GET", path , true);
+                    request.responseType = "arraybuffer";
+                    request.onload = function() {
+                        switch (request.status) {
+                        case 0:
+                            callback(request.response);
+                            break;
+                        default:
+                            console.log("Failed to load (" + request.status + ") : " + path);
+                            break;
                         }
                     }
-                    loadedImages[tno].onerror = function() {
-                        Simple.myerror("Failed to load image : " + modelDef.textures[tno]);
-                    }
-                })( i );
-            }
-            tick();
-        };
-        var lastValuePost = 0;
-        Simple.draw = function(gl) {
-        if( ! live2DModel || ! loadLive2DCompleted )
-            return;
-        if( ! initLive2DCompleted ){
-            initLive2DCompleted = true;
-            for( var i = 0; i < loadedImages.length; i++ ){
-                var texName = Simple.createTexture(gl, loadedImages[i]);
-                live2DModel.setTexture(i, texName);
-            }
-            loadedImages = null;
-            var s = \(env.l2dZoomFactor ?? 1.75) / live2DModel.getCanvasWidth();
-            var matrix4x4 = \(env.l2dCoordinateMatrix ?? """
-            [
-                s, 0, 0, 0,
-                0,-s, 0, 0,
-                0, 0, 1, 0,
-                -7/8, 6/5, 0, 1
-            ]
-            """);
-            live2DModel.setMatrix(matrix4x4);
-        }
-        
-        gl.clearColor(0.0 , 0.0 , 0.0 , 0.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        
-        live2DModel.loadParam();
-        if (!motionManager.isFinished()) {
-            motionManager.updateParam(live2DModel);
-        }
-        live2DModel.saveParam();
-        if (!expressionManager.isFinished()) {
-            expressionManager.updateParam(live2DModel);
-        }
-        
-        if (eyeBlinkEnabled) {
-            eyeBlink.updateParam(live2DModel);
-        }
-        
-        let seed = (new Date).valueOf() / 1e3 * 2 * Math.PI || 0;
-        
-        if (breathEnabled) {
-            live2DModel.setParamFloat("PARAM_BREATH", .5 + .5 * Math.sin(seed / 3.2345), 1);
-        }
-        
-        if (swayEnabled) {
-            live2DModel.setParamFloat("PARAM_ANGLE_X", 15 * Math.sin(seed / 6.5345) * .5, .5);
-            live2DModel.setParamFloat("PARAM_ANGLE_Y", 8 * Math.sin(seed / 3.5345) * .5, .5);
-            live2DModel.setParamFloat("PARAM_ANGLE_Z", 10 * Math.sin(seed / 5.5345) * .5, .5);
-            live2DModel.setParamFloat("PARAM_BODY_ANGLE_X", 4 * Math.sin(seed / 15.5345) * .5, .5)
-        }
-        
-        if (lipSyncValue) {
-            live2DModel.setParamFloat("PARAM_MOUTH_OPEN_Y", lipSyncValue);
-        }
-        
-        live2DModel.update();
-        live2DModel.draw();
-        
-        let date = (new Date).valueOf()
-        if (date - lastValuePost >= 80) {
-            lastValuePost = date;
-            window.webkit.messageHandlers.paramHandler.postMessage(JSON.stringify(
-                live2DModel.getModelImpl()._$E2()._$4S.map((function(e) {
-                    return {
-                        id: e._$wL.id,
-                        val: live2DModel.getParamFloat(e._$wL.id),
-                        min: e._$TT,
-                        max: e._$LT,
-                        def: e._$FS
-                    }
-                }))
-            ));
-        }
-        };
-        Simple.getWebGLContext = function(canvas) {
-        var NAMES = [ "webgl" , "experimental-webgl" , "webkit-3d" , "moz-webgl"];
-        var param = {
-            alpha : true,
-            premultipliedAlpha : true
-        };
-        for( var i = 0; i < NAMES.length; i++ ){
-            try{
-                var ctx = canvas.getContext( NAMES[i], param );
-                if( ctx ) return ctx;
-            }
-            catch(e){}
-        }
-        return null;
-        };
-        Simple.createTexture = function(gl, image)
-        {
-        var texture = gl.createTexture();
-        if ( !texture ){
-            mylog("Failed to generate gl texture name.");
-            return -1;
-        }
-        
-        if(live2DModel.isPremultipliedAlpha() == false){
-            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
-        }
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-        gl.activeTexture( gl.TEXTURE0 );
-        gl.bindTexture( gl.TEXTURE_2D , texture );
-        gl.texImage2D( gl.TEXTURE_2D , 0 , gl.RGBA , gl.RGBA , gl.UNSIGNED_BYTE , image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.bindTexture( gl.TEXTURE_2D , null );
-        return texture;
-        };
-        Simple.loadBytes = function(path , callback)
-        {
-        var request = new XMLHttpRequest();
-        request.open("GET", path , true);
-        request.responseType = "arraybuffer";
-        request.onload = function(){
-            switch( request.status ){
-            case 0:
-                callback( request.response );
-                break;
-            default:
-                console.log("Failed to load (" + request.status + ") : " + path);
-                break;
-            }
-        }
-        request.send(null);
-        };
-        </script>
+                    request.send(null);
+                };
+            </script>
         </body>
         </html>
         """.write(to: tmpFile, atomically: true, encoding: .utf8)
