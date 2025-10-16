@@ -14,6 +14,49 @@
 
 import Foundation
 
+#if canImport(SwiftUI)
+import SwiftUI
+
+@propertyWrapper
+public struct DoriStorage<Value: Sendable & DoriCacheable>: Sendable, DynamicProperty {
+    private let key: String
+    @State private var currentValue: Value
+    
+    public init(wrappedValue: Value, _ key: String) {
+        self.key = key.replacingOccurrences(of: "/", with: "_")
+        if let _data = try? Data(contentsOf: .init(filePath: NSHomeDirectory() + "/Documents/DoriStorage/\(key).plist")),
+           let value = Value(fromCache: _data) {
+            self._currentValue = .init(initialValue: value)
+        } else {
+            self._currentValue = .init(initialValue: wrappedValue)
+        }
+        
+        if !FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Documents/DoriStorage/") {
+            try? FileManager.default.createDirectory(atPath: NSHomeDirectory() + "/Documents/DoriStorage/", withIntermediateDirectories: true)
+        }
+    }
+    
+    public var wrappedValue: Value {
+        get {
+            currentValue
+        }
+        nonmutating set {
+            currentValue = newValue
+            try? newValue.dataForCache.write(to: storageURL)
+        }
+    }
+    
+    public var projectedValue: Binding<Value> {
+        $currentValue
+    }
+    
+    private var storageURL: URL {
+        .init(filePath: NSHomeDirectory() + "/Documents/DoriStorage/\(key).plist")
+    }
+}
+
+#else
+
 @propertyWrapper
 public struct DoriStorage<Value: Sendable & DoriCacheable>: Sendable {
     private let key: String
@@ -44,20 +87,6 @@ public struct DoriStorage<Value: Sendable & DoriCacheable>: Sendable {
     
     private var storageURL: URL {
         .init(filePath: NSHomeDirectory() + "/Documents/DoriStorage/\(key).plist")
-    }
-}
-
-#if canImport(SwiftUI)
-
-import SwiftUI
-
-extension DoriStorage: DynamicProperty {
-    public var projectedValue: Binding<Value> {
-        .init {
-            wrappedValue
-        } set: { newValue in
-            try? newValue.dataForCache.write(to: storageURL)
-        }
     }
 }
 
