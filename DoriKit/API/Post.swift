@@ -93,6 +93,11 @@ extension DoriAPI {
         }
         
         @inlinable
+        public static func communityAll(limit: Int = 20, offset: Int) async -> PagedPosts? {
+            await _list(.init(order: .timeDescending, limit: limit, offset: offset))
+        }
+        
+        @inlinable
         public static func communityPosts(limit: Int = 20, offset: Int) async -> PagedPosts? {
             await _list(.init(categoryName: .selfPost, categoryId: "text", order: .timeDescending, limit: limit, offset: offset))
         }
@@ -195,26 +200,41 @@ extension DoriAPI.Post {
     
     public enum Category: String, Sendable, Hashable {
         case selfPost = "SELF_POST"
+        case postComment = "POST_COMMENT"
+        case newsComment = "NEWS_COMMENT"
+        case characterComment = "CHARACTER_COMMENT"
+        case cardComment = "CARD_COMMENT"
+        case costumeComment = "COSTUME_COMMENT"
+        case eventComment = "EVENT_COMMENT"
+        case eventArchiveComment = "EVENTARCHIVE_COMMENT"
+        case gachaComment = "GACHA_COMMENT"
+        case songComment = "SONG_COMMENT"
+        case loginCampaignComment = "LOGINCAMPAIGN_COMMENT"
+        case comicComment = "COMIC_COMMENT"
+        case eventTrackerComment = "EVENTTRACKER_COMMENT"
+        case chartSimulatorComment = "CHARTSIMULATOR_COMMENT"
+        case live2dComment = "LIVE2D_COMMENT"
+        case storyComment = "STORY_COMMENT"
     }
     
     public struct ListRequest: Encodable, Sendable, Hashable {
         public var following: Bool
-        public var categoryName: String
-        public var categoryId: String
+        public var categoryName: String? = nil
+        public var categoryId: String?
         public var order: String
         public var limit: Int
         public var offset: Int
         
         public init(
             _following following: Bool = false,
-            categoryName: Category,
-            categoryId: String,
+            categoryName: Category? = nil,
+            categoryId: String? = nil,
             order: ListOrder,
             limit: Int = 20,
             offset: Int
         ) {
             self.following = following
-            self.categoryName = categoryName.rawValue
+            self.categoryName = categoryName?.rawValue
             self.categoryId = categoryId
             self.order = order.rawValue
             self.limit = limit
