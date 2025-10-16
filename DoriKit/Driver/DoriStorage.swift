@@ -47,7 +47,12 @@ public struct DoriStorage<Value: Sendable & DoriCacheable>: Sendable, DynamicPro
     }
     
     public var projectedValue: Binding<Value> {
-        $currentValue
+        .init {
+            wrappedValue
+        } set: { newValue in
+            wrappedValue = newValue
+        }
+
     }
     
     private var storageURL: URL {
