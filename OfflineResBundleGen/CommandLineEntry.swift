@@ -88,13 +88,7 @@ struct CommandLineEntry: AsyncParsableCommand {
 }
 
 func debugProcess(output: URL, token: String?, lastID: Int?) async {
-//    print(await readLastID())
-//    await updateLastID()
-//    print(await readLastID())
-//    await prepareUpdateFolder(forLocale: .jp, from: "/Users/himmel/gd-offline-res", to: output.absoluteString)
-    print(output.absoluteString.dropURLPrefix())
-    
-    do  {
+    do {
         try await updateAssets(in: output, withToken: token, lastID: lastID)
     } catch {
         print("updateAssets failure: \(error)")

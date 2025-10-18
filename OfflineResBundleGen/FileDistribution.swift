@@ -40,6 +40,9 @@ func updateAssets(in destination: URL, withToken token: String?, lastID givenLas
     fflush(stdout)
     
     let assetsForUpdate = await searchForAssetUpdate(lastID: lastID!)
+    let newestID = await fetchNewestID()
+    
+    print("[$][Main] Last ID: #\(lastID!) -> #\(newestID ?? -1)")
     
     guard assetsForUpdate != nil else {
         print("[×][Main] Search result is `nil`.")
@@ -49,20 +52,18 @@ func updateAssets(in destination: URL, withToken token: String?, lastID givenLas
     fflush(stdout)
     
     for (locale, datas) in assetsForUpdate! {
-        await updateLocale(datas: Array(datas), forLocale: locale, to: destination, withToken: token!)
+        await updateLocale(datas: Array(datas), forLocale: locale, to: destination, withToken: token!, lastIDs: (lastID!, newestID))
     }
-    
-    lastID = await updateLastID()
-    if lastID != nil {
-        print("[$][Main] Last ID updated.")
+    if let newestID {
+        print("[$][Main] Last ID update requested.")
+        await writeLastID(id: newestID)
     } else {
         print("[×][Main] Last ID update failed.")
     }
-    
     print("[✓][Main] Process all done.")
 }
 
-func updateLocale(datas: [String], forLocale locale: DoriLocale, to destination: URL, withToken token: String) async {
+func updateLocale(datas: [String], forLocale locale: DoriLocale, to destination: URL, withToken token: String, lastIDs: (Int, Int?)) async {
     // I. Initiailzization
     print("[$][Update][\(locale.rawValue)] Update process starts.")
     var groupedDatas: [String: [String]] = [:]
@@ -149,7 +150,7 @@ git checkout "\#(locale.rawValue)/\#(branch)"
 echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Checked out."
 
 git add .
-git commit -m "Auto update \#(locale.rawValue)/\#(branch) ($(date +"%Y-%m-%d"))" || true
+git commit -m "Auto update \#(locale.rawValue)/\#(branch) ($(date +"%Y-%m-%d")) (#\#(lastIDs.1 ?? -1))" || true
 for i in {1..10}; do git push && break; done
 
 echo "[%][Git Push][\#(locale.rawValue)/\#(branch)] Commited & Pushed."

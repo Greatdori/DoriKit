@@ -50,7 +50,7 @@ func readLastID(allowInitialization: Bool = true) async -> Int? {
         if !FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Containers/GreatdoriOfflineResBundleGen") {
             if allowInitialization {
                 print("[$][LastID] Last ID initialization requested.")
-                return await updateLastID()
+                return await writeLastID(id: await fetchNewestID())
             } else {
                 print("[×][LastID] Last ID isn't initialized. Auto-initialization is disabled.")
             }
@@ -61,29 +61,27 @@ func readLastID(allowInitialization: Bool = true) async -> Int? {
     return nil
 }
 
-func writeLastID(id: Int) async {
+@discardableResult
+func writeLastID(id: Int?) async -> Int? {
+    guard id != nil else {
+        print("[×][LastID] LastID cannot be written as `nil`.")
+        return nil
+    }
     do {
         if !FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Containers/GreatdoriOfflineResBundleGen") {
             try FileManager.default.createDirectory(atPath: NSHomeDirectory() + "/Library/Containers/GreatdoriOfflineResBundleGen", withIntermediateDirectories: true)
         }
-        let data = "\(id)".data(using: .utf8)!
+        let data = "\(id!)".data(using: .utf8)!
         try data.write(to: URL(filePath: NSHomeDirectory() + "/Library/Containers/GreatdoriOfflineResBundleGen/LastID.txt"))
+        print("[$][LastID] LastID written as #\(id!).")
     } catch {
-        print("[×][LastID] Cannot read due to a Bash command failure. Error: \(error).")
+        print("[×][LastID] Cannot write LastID due to a Bash command failure. Error: \(error).")
     }
+    return id
 }
 
-@discardableResult
-func updateLastID() async -> Int? {
-    let id = await getRecentAssetPatchNotes(lastID: 0)?.first?.relatedID
-    if let id {
-        print("[$][LastID] LastID updated to #\(id).")
-        await writeLastID(id: id)
-        return id
-    } else {
-        print("[!][LastID] LastID update failed.")
-        return nil
-    }
+func fetchNewestID() async -> Int? {
+    return await getRecentAssetPatchNotes(lastID: 0)?.first?.relatedID
 }
 
 
