@@ -129,7 +129,7 @@ extension DoriAPI {
                                 .init(
                                     id: $0.1["id"].intValue,
                                     type: .init(rawValue: $0.1["type"].stringValue) ?? .bandori,
-                                    server: .init(rawIntValue: $0.1["server"].intValue) ?? .jp
+                                    server: .init(_rawIntValue: $0.1["server"].intValue) ?? .jp
                                 )
                             },
                             email: respJSON["email"].stringValue,
@@ -179,14 +179,14 @@ extension DoriAPI {
                                 .init(
                                     id: $0.1["id"].intValue,
                                     type: .init(rawValue: $0.1["type"].stringValue) ?? .bandori,
-                                    server: .init(rawIntValue: $0.1["server"].intValue) ?? .jp
+                                    server: .init(_rawIntValue: $0.1["server"].intValue) ?? .jp
                                 )
                             },
                             posterCard: posterCard,
                             selfIntroduction: respJSON["selfIntro"].stringValue,
                             accounts: respJSON["serverIds"].map {
                                 .init(
-                                    server: .init(rawIntValue: $0.1["server"].intValue) ?? .jp,
+                                    server: .init(_rawIntValue: $0.1["server"].intValue) ?? .jp,
                                     uid: $0.1["id"].intValue
                                 )
                             },
@@ -254,7 +254,7 @@ extension DoriAPI {
                             uid: respJSON["syncRequest"]["params"]["uid"].intValue,
                             type: .init(rawValue: respJSON["syncRequest"]["params"]["type"].stringValue) ?? .link,
                             code: respJSON["syncRequest"]["params"]["code"].string,
-                            server: .init(rawIntValue: respJSON["syncRequest"]["params"]["server"].intValue) ?? .jp,
+                            server: .init(_rawIntValue: respJSON["syncRequest"]["params"]["server"].intValue) ?? .jp,
                             linkResult: respJSON["syncRequest"]["result"]["result"].bool
                         )
                     } else {
@@ -303,7 +303,7 @@ extension DoriAPI {
                 method: .post,
                 parameters: _SyncParameterList(
                     type: "linkPrepare",
-                    server: locale.rawIntValue,
+                    server: locale._rawIntValue,
                     uid: uid
                 ),
                 encoder: JSONParameterEncoder.default
@@ -363,7 +363,7 @@ extension DoriAPI {
                     if respJSON["result"].bool == true {
                         return respJSON["accounts"].map {
                             .init(
-                                server: .init(rawIntValue: $0.1["server"].intValue) ?? .jp,
+                                server: .init(_rawIntValue: $0.1["server"].intValue) ?? .jp,
                                 uid: $0.1["uid"].intValue
                             )
                         }
@@ -391,7 +391,7 @@ extension DoriAPI {
         ///     Use ``withUserToken(_:_:)-45z2w`` to attach a token.
         ///     Use ``login(_:)`` to get a token.
         public static func gameAccountDetail(of account: GameAccount) async -> GameAccountDetail? {
-            let request = await requestJSON("https://bestdori.com/api/sync/account?server=\(account.server.rawIntValue)")
+            let request = await requestJSON("https://bestdori.com/api/sync/account?server=\(account.server._rawIntValue)")
             if case let .success(respJSON) = request {
                 let task = Task.detached(priority: .userInitiated) { () async -> GameAccountDetail? in
                     if respJSON["result"].bool == true {
@@ -422,7 +422,7 @@ extension DoriAPI {
                         }
                         
                         return .init(
-                            server: .init(rawIntValue: respJSON["account"]["server"].intValue) ?? .jp,
+                            server: .init(_rawIntValue: respJSON["account"]["server"].intValue) ?? .jp,
                             uid: respJSON["account"]["uid"].intValue,
                             rank: respJSON["account"]["rank"].intValue,
                             clearCount: respJSON["account"]["clearCount"].intValue,
@@ -677,7 +677,7 @@ extension DoriAPI.User {
                     var container = encoder.container(keyedBy: CodingKeys.self)
                     try container.encode(id, forKey: .id)
                     try container.encode(type.rawValue, forKey: .type)
-                    try container.encode(server.rawIntValue, forKey: .server)
+                    try container.encode(server._rawIntValue, forKey: .server)
                 }
             }
             struct EncodingServerID: Encodable {

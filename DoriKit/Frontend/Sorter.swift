@@ -162,19 +162,19 @@ extension DoriFrontend {
                 let low = UInt16(rawValue & 0xFFFF)
                 switch high {
                 case 1 << 0:
-                    if let locale = DoriAPI.Locale(rawIntValue: Int(low)) {
+                    if let locale = DoriAPI.Locale(_rawIntValue: Int(low)) {
                         self = .releaseDate(in: locale)
                     } else {
                         return nil
                     }
                 case 1 << 1:
-                    if let locale = DoriAPI.Locale(rawIntValue: Int(low)) {
+                    if let locale = DoriAPI.Locale(_rawIntValue: Int(low)) {
                         self = .difficultyReleaseDate(in: locale)
                     } else {
                         return nil
                     }
                 case 1 << 2:
-                    if let locale = DoriAPI.Locale(rawIntValue: Int(low)) {
+                    if let locale = DoriAPI.Locale(_rawIntValue: Int(low)) {
                         self = .mvReleaseDate(in: locale)
                     } else {
                         return nil
@@ -201,13 +201,13 @@ extension DoriFrontend {
                 switch self {
                 case .releaseDate(let locale):
                     high = 1 << 0
-                    low = UInt16(locale.rawIntValue)
+                    low = UInt16(locale._rawIntValue)
                 case .difficultyReleaseDate(let locale):
                     high = 1 << 1
-                    low = UInt16(locale.rawIntValue)
+                    low = UInt16(locale._rawIntValue)
                 case .mvReleaseDate(let locale):
                     high = 1 << 2
-                    low = UInt16(locale.rawIntValue)
+                    low = UInt16(locale._rawIntValue)
                 case .level(let difficulty):
                     high = 1 << 3
                     low = UInt16(difficulty.rawValue)

@@ -257,14 +257,42 @@ public final class DoriAPI {
             _modify { yield &self[locale] }
         }
         
-        public var allAvailableLocales: Set<Locale> {
-            var result: Set<Locale> = []
-            for locale in Locale.allCases where availableInLocale(locale) {
-                result.insert(locale)
+        public var availableLocales: [Locale] {
+            let expectedLocales = [Locale.primaryLocale, .secondaryLocale]
+            + Locale.allCases.drop {
+                $0 == .primaryLocale || $0 == .secondaryLocale
             }
-            return result
+            
+            var availableLocales: [Locale] = []
+            for locale in Locale.allCases where self.availableInLocale(locale) {
+                availableLocales.append(locale)
+            }
+            
+            return expectedLocales.filter { availableLocales.contains($0) }
         }
         
+        public var unavailableLocales: [Locale] {
+            let availableLocales = self.availableLocales
+            return Locale.allCases.filter({ !availableLocales.contains($0) })
+        }
+        
+        @available(
+            *,
+             deprecated,
+             renamed: "availableLocales",
+             message: "Use 'availableLocales' with an array result instead."
+        )
+        @inlinable
+        public var allAvailableLocales: Set<Locale> {
+            Set(self.availableLocales)
+        }
+        
+        @available(
+            *,
+             deprecated,
+             renamed: "unavailableLocales",
+             message: "Use 'unavailableLocales' with an array result instead."
+        )
         @inlinable
         public var allUnavailableLocales: Set<Locale> {
             Set(Locale.allCases).subtracting(allAvailableLocales)
@@ -299,8 +327,7 @@ public final class DoriAPI {
 }
 
 extension DoriAPI.Locale {
-    @usableFromInline
-    internal init?(rawIntValue value: Int) {
+    public init?(_rawIntValue value: Int) {
         switch value {
         case 0: self = .jp
         case 1: self = .en
@@ -311,7 +338,7 @@ extension DoriAPI.Locale {
         }
     }
     
-    internal var rawIntValue: Int {
+    public var _rawIntValue: Int {
         switch self {
         case .jp: return 0
         case .en: return 1
@@ -393,7 +420,7 @@ extension DoriAPI.LocalizedData {
     
     @inlinable
     public func enumerated() -> [(locale: DoriAPI.Locale, element: T?)] {
-        compactMap { $0 }.enumerated().map { (.init(rawIntValue: $0.offset)!, $0.element) }
+        compactMap { $0 }.enumerated().map { (.init(_rawIntValue: $0.offset)!, $0.element) }
     }
 
     @inlinable

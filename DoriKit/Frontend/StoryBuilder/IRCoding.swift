@@ -62,7 +62,7 @@ extension StoryIR {
         
         var metadata: UInt64 = 0
         
-        metadata |= UInt64(self.locale.rawIntValue)
+        metadata |= UInt64(self.locale._rawIntValue)
         
         compressedData.insert(
             contentsOf: unsafe Data(
@@ -94,7 +94,7 @@ extension StoryIR {
         compressedData.removeSubrange(4..<12)
         
         guard let metaLocale = DoriAPI.Locale(
-            rawIntValue: Int(metadata & 0x00000000000000FF)
+            _rawIntValue: Int(metadata & 0x00000000000000FF)
         ) else { return nil }
         
         var bvxHeader: UInt32 = 0x787662

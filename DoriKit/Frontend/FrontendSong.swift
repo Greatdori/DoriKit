@@ -159,7 +159,7 @@ extension DoriFrontend {
                         switch type {
                         case .score, .scoreOverLife, .scoreUnderLife, .scoreContinuedNoteJudge, .scoreUnderGreatHalf:
                             let c = effect.activateEffectValue
-                            var C = Double((m && skill.activationEffect.unificationActivateEffectValue != nil ? skill.activationEffect.unificationActivateEffectValue : (locale.rawIntValue < c.count ? c[locale.rawIntValue] : c[0])) ?? 0)
+                            var C = Double((m && skill.activationEffect.unificationActivateEffectValue != nil ? skill.activationEffect.unificationActivateEffectValue : (locale._rawIntValue < c.count ? c[locale._rawIntValue] : c[0])) ?? 0)
                             if skill.activationEffect.activateEffectTypes[.scoreRateUpWithPerfect] != nil {
                                 C += 0.5 * min(0, 100) * 1
                             }

@@ -93,7 +93,7 @@ extension DoriAPI {
                                         .init(
                                             id: $0.1["id"].intValue,
                                             type: $0.1["type"].stringValue,
-                                            server: .init(rawIntValue: $0.1["server"].intValue) ?? .jp
+                                            server: .init(_rawIntValue: $0.1["server"].intValue) ?? .jp
                                         )
                                     }
                                 ),

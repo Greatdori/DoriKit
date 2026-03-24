@@ -80,7 +80,7 @@ extension DoriAPI {
                     for (key, value) in respJSON {
                         var musicIDs: DoriAPI.LocalizedData<[Int]>?
                         for locale in DoriAPI.Locale.allCases {
-                            let objects = value["musics"][locale.rawIntValue]
+                            let objects = value["musics"][locale._rawIntValue]
                             guard !objects.isEmpty else { continue }
                             
                             if musicIDs == nil {
@@ -435,7 +435,7 @@ extension DoriAPI {
                     // Musics
                     var musics: DoriAPI.LocalizedData<[Event.Music]>?
                     for locale in DoriAPI.Locale.allCases {
-                        let objects = respJSON["musics"][locale.rawIntValue]
+                        let objects = respJSON["musics"][locale._rawIntValue]
                         guard !objects.isEmpty else { continue }
                         
                         if musics == nil {
