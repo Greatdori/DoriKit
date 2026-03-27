@@ -72,6 +72,7 @@
 		8C2ED87E2F027B7A006BC253 /* FrontendCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2ED87D2F027B71006BC253 /* FrontendCalculator.swift */; };
 		8C2ED8802F02BB45006BC253 /* Duration+Overflow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2ED87F2F02BB3F006BC253 /* Duration+Overflow.swift */; };
 		8C2EE3AC2E704A3400EDDD0D /* libgit2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C2EE3AA2E70498800EDDD0D /* libgit2.a */; };
+		8C31FDE62F76DA2A00EEF5E5 /* TeamBuilder.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8C31FDE52F76DA2A00EEF5E5 /* TeamBuilder.metal */; };
 		8C320FB12E8C1239002D183A /* DriverCommonProtocol.swift.gyb in Sources */ = {isa = PBXBuildFile; fileRef = 8C320FB02E8C1230002D183A /* DriverCommonProtocol.swift.gyb */; };
 		8C3264042E3B760100081F4F /* PreCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3264032E3B75FF00081F4F /* PreCache.swift */; };
 		8C3264062E3C69C900081F4F /* FrontendGacha.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3264052E3C69C000081F4F /* FrontendGacha.swift */; };
@@ -89,6 +90,7 @@
 		8C4C58052ED365630097F41F /* TSLibrary.d.ts in Resources */ = {isa = PBXBuildFile; fileRef = 8C4C58042ED365510097F41F /* TSLibrary.d.ts */; };
 		8C4C89412E620C63007F1E9F /* CopyOnWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4C89402E620C5F007F1E9F /* CopyOnWrite.swift */; };
 		8C4C89432E620EC9007F1E9F /* CopyOnWriteMacro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4C89422E620EC3007F1E9F /* CopyOnWriteMacro.swift */; };
+		8C58F92D2F743A7300F35793 /* FrontendTeamBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C58F92C2F743A6C00F35793 /* FrontendTeamBuilder.swift */; };
 		8C59DBCD2E6296D60021317E /* SwiftOperators in Frameworks */ = {isa = PBXBuildFile; productRef = 8C59DBCC2E6296D60021317E /* SwiftOperators */; };
 		8C62485A2E9116B600FF6950 /* CachePreloading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6248592E9116AE00FF6950 /* CachePreloading.swift */; };
 		8C7855972E48A811000EA06E /* LoginCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7855962E48A80B000EA06E /* LoginCampaign.swift */; };
@@ -334,6 +336,7 @@
 		8C2ED87D2F027B71006BC253 /* FrontendCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrontendCalculator.swift; sourceTree = "<group>"; };
 		8C2ED87F2F02BB3F006BC253 /* Duration+Overflow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Duration+Overflow.swift"; sourceTree = "<group>"; };
 		8C2EE3AA2E70498800EDDD0D /* libgit2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgit2.a; path = "../../../Library/Developer/Xcode/DerivedData/Greatdori-aghqtexjlhuxqfcowlzrriajcttj/Build/Products/Debug/libgit2.a"; sourceTree = "<group>"; };
+		8C31FDE52F76DA2A00EEF5E5 /* TeamBuilder.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TeamBuilder.metal; sourceTree = "<group>"; };
 		8C320FB02E8C1230002D183A /* DriverCommonProtocol.swift.gyb */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = DriverCommonProtocol.swift.gyb; sourceTree = "<group>"; };
 		8C3264032E3B75FF00081F4F /* PreCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreCache.swift; sourceTree = "<group>"; };
 		8C3264052E3C69C000081F4F /* FrontendGacha.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrontendGacha.swift; sourceTree = "<group>"; };
@@ -349,6 +352,7 @@
 		8C4C58042ED365510097F41F /* TSLibrary.d.ts */ = {isa = PBXFileReference; explicitFileType = sourcecode.typescript; path = TSLibrary.d.ts; sourceTree = "<group>"; };
 		8C4C89402E620C5F007F1E9F /* CopyOnWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyOnWrite.swift; sourceTree = "<group>"; };
 		8C4C89422E620EC3007F1E9F /* CopyOnWriteMacro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyOnWriteMacro.swift; sourceTree = "<group>"; };
+		8C58F92C2F743A6C00F35793 /* FrontendTeamBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrontendTeamBuilder.swift; sourceTree = "<group>"; };
 		8C59DBD42E62E3C60021317E /* macos.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = macos.json; sourceTree = "<group>"; };
 		8C59DBD72E62E4D70021317E /* ios.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ios.json; sourceTree = "<group>"; };
 		8C59DBD82E62E5650021317E /* watchos.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = watchos.json; sourceTree = "<group>"; };
@@ -693,6 +697,7 @@
 				8CBC1BD02E32B5B6004023F7 /* Constructor.swift */,
 				8CB76C852E60171D00229F6F /* Macros.swift */,
 				8CD13FC42E2FE2BF00673E15 /* Internal */,
+				8C31FDE42F76DA0F00EEF5E5 /* Shaders */,
 				8CD13FC02E2FE2BF00673E15 /* Networking */,
 				8C2CCD312E3DED130014189F /* RichContent */,
 				8CD13FAD2E2FE2BF00673E15 /* API */,
@@ -754,6 +759,14 @@
 				8C2CCD4A2E3E0C840014189F /* emoji_names.plist */,
 			);
 			path = DoriEmoji;
+			sourceTree = "<group>";
+		};
+		8C31FDE42F76DA0F00EEF5E5 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				8C31FDE52F76DA2A00EEF5E5 /* TeamBuilder.metal */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 		8C4C57FF2ED355270097F41F /* FunctionEvaluator */ = {
@@ -979,6 +992,7 @@
 				8CB4D46B2E43049E0085D57A /* FrontendSong.swift */,
 				8C7855DB2E4A6BEC000EA06E /* FrontendMiracleTicket.swift */,
 				8C9474422E348D1A003A90B4 /* FrontendMisc.swift */,
+				8C58F92C2F743A6C00F35793 /* FrontendTeamBuilder.swift */,
 				8CEA306E2EAD0279009D41C5 /* FrontendUser.swift */,
 			);
 			path = Frontend;
@@ -1659,6 +1673,7 @@
 				8C78559B2E48C94D000EA06E /* FrontendComic.swift in Sources */,
 				8C2CCD512E3F0D850014189F /* PagedContent.swift in Sources */,
 				8C320FB12E8C1239002D183A /* DriverCommonProtocol.swift.gyb in Sources */,
+				8C58F92D2F743A7300F35793 /* FrontendTeamBuilder.swift in Sources */,
 				8C7855DC2E4A6BFA000EA06E /* FrontendMiracleTicket.swift in Sources */,
 				8C923D952E307227003AFC0A /* TaskGroup.swift.gyb in Sources */,
 				8C48F2422EC8970C00A8AE70 /* IR2PlainText.swift in Sources */,
@@ -1670,6 +1685,7 @@
 				8C480C162EC7663200A8AE70 /* Bandori2IR.swift in Sources */,
 				8CBC1BD12E32B5BA004023F7 /* Constructor.swift in Sources */,
 				8C8E43EA2E5D2AC4005590F0 /* OfflineAssetDispatch.swift in Sources */,
+				8C31FDE62F76DA2A00EEF5E5 /* TeamBuilder.metal in Sources */,
 				8C8E43EC2E5D3118005590F0 /* OfflineNetworking.swift in Sources */,
 				8C3264042E3B760100081F4F /* PreCache.swift in Sources */,
 				8C32F31C2E8D61F0002D183A /* NetworkCache.swift in Sources */,

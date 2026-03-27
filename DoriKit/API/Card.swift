@@ -728,6 +728,19 @@ extension DoriAPI.Cards.Stat: AdditiveArithmetic {
     public static func *=(a: inout Self, b: Int) {
         a = a * b
     }
+    
+    @inlinable
+    public static func *(lhs: Self, rhs: Double) -> Self {
+        .init(
+            performance: Int(Double(lhs.performance) * rhs),
+            technique: Int(Double(lhs.technique) * rhs),
+            visual: Int(Double(lhs.visual) * rhs)
+        )
+    }
+    @_transparent
+    public static func *=(a: inout Self, b: Double) {
+        a = a * b
+    }
 }
 extension DoriAPI.Cards.CardStat {
     /// The minimum level of a card.

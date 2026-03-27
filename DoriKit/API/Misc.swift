@@ -406,6 +406,81 @@ extension DoriAPI {
             return nil
         }
         
+        public static func areaItems() async -> [AreaItem]? {
+            let request = await requestJSON("https://bestdori.com/api/areaItems/main.5.json")
+            if case let .success(respJSON) = request {
+                let task = Task.detached(priority: .userInitiated) {
+                    respJSON.map {
+                        AreaItem(
+                            id: Int($0.0) ?? 0,
+                            maxLevel: .init(
+                                jp: $0.1["level"][0].int,
+                                en: $0.1["level"][1].int,
+                                tw: $0.1["level"][2].int,
+                                cn: $0.1["level"][3].int,
+                                kr: $0.1["level"][4].int
+                            ),
+                            name: .init(
+                                jp: $0.1["areaItemName"][0].string,
+                                en: $0.1["areaItemName"][1].string,
+                                tw: $0.1["areaItemName"][2].string,
+                                cn: $0.1["areaItemName"][3].string,
+                                kr: $0.1["areaItemName"][4].string
+                            ),
+                            descriptions: $0.1["description"].map {
+                                (key: Int($0.0) ?? 0,
+                                 value: LocalizedData<String>(
+                                    jp: $0.1[0].string,
+                                    en: $0.1[1].string,
+                                    tw: $0.1[2].string,
+                                    cn: $0.1[3].string,
+                                    kr: $0.1[4].string
+                                ))
+                            }.reduce(into: [:]) { $0.updateValue($1.value, forKey: $1.key) },
+                            performanceBoosts: $0.1["performance"].map {
+                                (key: Int($0.0) ?? 0,
+                                 value: LocalizedData<Double>(
+                                    jp: $0.1[0].double,
+                                    en: $0.1[1].double,
+                                    tw: $0.1[2].double,
+                                    cn: $0.1[3].double,
+                                    kr: $0.1[4].double
+                                ))
+                            }.reduce(into: [:]) { $0.updateValue($1.value, forKey: $1.key) },
+                            techniqueBoosts: $0.1["technique"].map {
+                                (key: Int($0.0) ?? 0,
+                                 value: LocalizedData<Double>(
+                                    jp: $0.1[0].double,
+                                    en: $0.1[1].double,
+                                    tw: $0.1[2].double,
+                                    cn: $0.1[3].double,
+                                    kr: $0.1[4].double
+                                ))
+                            }.reduce(into: [:]) { $0.updateValue($1.value, forKey: $1.key) },
+                            visualBoosts: $0.1["visual"].map {
+                                (key: Int($0.0) ?? 0,
+                                 value: LocalizedData<Double>(
+                                    jp: $0.1[0].double,
+                                    en: $0.1[1].double,
+                                    tw: $0.1[2].double,
+                                    cn: $0.1[3].double,
+                                    kr: $0.1[4].double
+                                ))
+                            }.reduce(into: [:]) { $0.updateValue($1.value, forKey: $1.key) },
+                            targetAttributes: Set($0.1["targetAttributes"].map {
+                                .init(rawValue: $0.1.stringValue) ?? .powerful
+                            }),
+                            targetBandIDs: Set($0.1["targetBandIds"].map {
+                                $0.1.intValue
+                            })
+                        )
+                    }
+                }
+                return await task.value
+            }
+            return nil
+        }
+        
         public static func decoFrames() async -> [DecoFrame]? {
             let request = await requestJSON("https://bestdori.com/api/deco/frames.all.3.json")
             if case let .success(respJSON) = request {
@@ -904,6 +979,18 @@ extension DoriAPI.Misc {
             public var fullComboMusicCount: Int
             public var allPerfectMusicCount: Int
         }
+    }
+    
+    public struct AreaItem: Sendable, Identifiable, Hashable, DoriCache.Cacheable {
+        public var id: Int
+        public var maxLevel: LocalizedData<Int>
+        public var name: LocalizedData<String>
+        public var descriptions: [Int: LocalizedData<String>]
+        public var performanceBoosts: [Int: LocalizedData<Double>]
+        public var techniqueBoosts: [Int: LocalizedData<Double>]
+        public var visualBoosts: [Int: LocalizedData<Double>]
+        public var targetAttributes: Set<DoriAPI.Attribute>
+        public var targetBandIDs: Set<Int>
     }
     
     public struct DecoFrame: Sendable, Identifiable, Hashable, DoriCache.Cacheable {
