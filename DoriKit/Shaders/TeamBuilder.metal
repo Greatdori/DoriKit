@@ -31,30 +31,37 @@ struct MaxBandPowerResult {
     uint index2;
     uint power;
 };
+struct CombinationPair {
+    int a;
+    int b;
+};
 
 kernel void maxBandPower(device const AreaItem* areaItems,
                          device const CardStats* cardStats,
-                         device const int* areaItemCombinations,
+                         device const CombinationPair* areaItemCombinations,
                          device const int* cardStatCombinations,
                          constant const int* flags,
                          device MaxBandPowerResult* results,
                          uint2 index [[thread_position_in_grid]]) {
-    device const int* thisAreaItemCombinations = areaItemCombinations + index[0];
-    device const int* thisCardStatCombinations = cardStatCombinations + index[1];
+    device const CombinationPair* thisAreaItemCombinations = areaItemCombinations + index[0] * flags[3];
+    device const int* thisCardStatCombinations = cardStatCombinations + index[1] * 5;
     
-    AreaItem usingAreaItems[5];
+    AreaItem usingAreaItems[64];
+    for (int i = 0; i < flags[3]; i++) {
+        auto pair = thisAreaItemCombinations[i];
+        usingAreaItems[i] = (areaItems + pair.a * flags[2])[pair.b];
+    }
     CardStats usingCardStats[5];
     for (int i = 0; i < 5; i++) {
-        usingAreaItems[i] = areaItems[thisAreaItemCombinations[i]];
         usingCardStats[i] = cardStats[thisCardStatCombinations[i]];
     }
     
     float performanceFactor = 1;
     float techniqueFactor = 1;
     float visualFactor = 1;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < flags[3]; i++) {
         thread AreaItem* item = &usingAreaItems[i];
-        uint isTargetAttr = min(item->targetAttributes & uint(flags[0]), uint(1));
+        uint isTargetAttr = min(item->targetAttributes & (1 << uint(flags[0])), uint(1));
         performanceFactor += item->performanceBoost / 100.0 * isTargetAttr;
         techniqueFactor += item->techniqueBoost / 100.0 * isTargetAttr;
         visualFactor += item->visualBoost / 100.0 * isTargetAttr;
@@ -109,6 +116,8 @@ kernel void maxScore(device const MaxScoreBandCard* bandCards,
         
         float skillBonus = 1.0;
         const float skillStartBeat = closest_less_than(skillStartBeats, 6, chartElement->beat);
+        
+        // 3646056
         
         int cardIdx;
         if (skillSelector[0] < 5) {
