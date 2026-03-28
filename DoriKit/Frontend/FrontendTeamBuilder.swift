@@ -28,7 +28,15 @@ extension DoriFrontend {
         public var areaItems: [AreaItemInformation] = []
         public var isHardwareAccelerationDisabled = false
         
-        public init() {}
+        private var allSkills: [DoriAPI.Skills.Skill]
+        
+        public init?() async {
+            if let skills = await DoriAPI.Skills.all() {
+                self.allSkills = skills
+            } else {
+                return nil
+            }
+        }
         
         private let areaItemGroups: [[Int]] = [
             [1, 2, 3, 4, 5, 73, 83, 90, 97], // Mic
@@ -101,60 +109,29 @@ extension DoriFrontend {
         
         open func calculateMaximize(
             target: MaximizeCalculationTarget,
+            maxResults: Int = 10,
             centerSkill: DoriAPI.Skills.Skill? = nil
-        ) async -> [[DoriAPI.Cards.PreviewCard]] {
+        ) async -> [TeamResult] {
             _checkPreconditions()
             
             switch target {
             case .bandPower:
                 return await _calculateMaximizeTargetBandPower(
-                    centerSkill: centerSkill
+                    maxResults: maxResults
                 )
             case .score:
-                fatalError("Not implemented")
+                return await _calculateMaximizeTargetScore(
+                    maxResults: maxResults,
+                    centerSkill: centerSkill
+                )
             case .eventPoint:
                 fatalError("Not implemented")
             }
         }
         
         open func _calculateMaximizeTargetBandPower(
-            centerSkill: DoriAPI.Skills.Skill? = nil
-        ) async -> [[DoriAPI.Cards.PreviewCard]] {
-            func performFastCombinations<T>(from input: [T], size: Int, handler: ([T]) -> Void) {
-                var buffer = [T](repeating: input[0], count: size)
-                func backtrack(start: Int, pos: Int) {
-                    if pos == size {
-                        handler(buffer)
-                        return
-                    }
-                    for i in start..<(input.count - (size - pos) + 1) {
-                        buffer[pos] = input[i]
-                        backtrack(start: i + 1, pos: pos + 1)
-                    }
-                }
-                backtrack(start: 0, pos: 0)
-            }
-            func combinations<T>(for input: [T], size: Int) -> [[Int]] {
-                var result: [[Int]] = []
-                var buffer = [Int](repeating: 0, count: size)
-                
-                func backtrack(start: Int, pos: Int) {
-                    if pos == size {
-                        result.append(buffer)
-                        return
-                    }
-                    
-                    for i in start..<(input.count - (size - pos) + 1) {
-                        buffer[pos] = i
-                        backtrack(start: i + 1, pos: pos + 1)
-                    }
-                }
-                
-                backtrack(start: 0, pos: 0)
-                return result
-            }
-
-            
+            maxResults: Int
+        ) async -> [TeamResult] {
             // [CharacterID: [Attribute: (Card, BaseStat)]]
             var topCardsByAttr: [Int: [DoriAPI.Attribute: (CardInformation, DoriAPI.Cards.Stat)]] = [:]
             
@@ -191,7 +168,7 @@ extension DoriFrontend {
             let allGroups = self.groupedAreaItems()
             let filteredGroups = allGroups.compactMap { $0.sorted(by: { $0.level > $1.level }).first }
             
-            var bestTeams: [(cards: [CardInformation], power: Int)] = []
+            var bestTeams: [TeamResult] = []
             
             let attributes: [DoriAPI.Attribute] = [.powerful, .cool, .happy, .pure]
             
@@ -284,9 +261,9 @@ extension DoriFrontend {
                         )
                     }
                     let flagBuffer = unsafe [
-                        _attrShifts[targetAttr]!,
-                        groupCombinations.count,
-                        charCombinations.count
+                        Int32(_attrShifts[targetAttr]!),
+                        Int32(groupCombinations.count),
+                        Int32(charCombinations.count)
                     ].withUnsafeBytes { ptr in
                         unsafe self.haDevice.makeBuffer(
                             bytes: ptr.baseAddress!,
@@ -330,11 +307,17 @@ extension DoriFrontend {
                     bestTeams.append(
                         contentsOf: results
                             .sorted { $0.power > $1.power }
-                            .prefix(100)
+                            .prefix(maxResults * 10)
                             .map {
-                                (charCombinations[Int($0.index2)].map {
-                                    candidateChars[$0].1.0
-                                }, Int($0.power))
+                                TeamResult(
+                                    cards: charCombinations[Int($0.index2)].map {
+                                        candidateChars[$0].1.0.card
+                                    },
+                                    areaItems: groupCombinations[Int($0.index1)].map {
+                                        filteredGroups[$0]
+                                    },
+                                    targetValue: Int($0.power)
+                                )
                             }
                     )
                 }
@@ -369,19 +352,378 @@ extension DoriFrontend {
                                 currentCards.append(data.0)
                             }
                             
-                            bestTeams.append((currentCards, teamPower))
-                            if bestTeams.count > 100 {
-                                bestTeams.sort { $0.power > $1.power }
-                                bestTeams.removeLast(50)
+                            bestTeams.append(.init(
+                                cards: currentCards.map { $0.card },
+                                areaItems: selectedItems,
+                                targetValue: teamPower
+                            ))
+                            if bestTeams.count > maxResults * 20 {
+                                bestTeams.sort { $0.targetValue > $1.targetValue }
+                                bestTeams.removeLast(maxResults * 10)
                             }
                         }
                     }
                 }
             }
             
-            return bestTeams.sorted { $0.power > $1.power }.prefix(10).map { team in
-                team.cards.map { $0.card }
+            return Array(bestTeams.sorted { $0.targetValue > $1.targetValue }.prefix(maxResults))
+        }
+        
+        open func _calculateMaximizeTargetScore(
+            maxResults: Int,
+            centerSkill: DoriAPI.Skills.Skill? = nil
+        ) async -> [TeamResult] {
+            let possibleSkillOrders = [
+                [0, 1, 2, 3, 4], [1, 0, 2, 3, 4], [2, 0, 1, 3, 4],
+                [0, 2, 1, 3, 4], [1, 2, 0, 3, 4], [2, 1, 0, 3, 4],
+                [2, 1, 3, 0, 4], [1, 2, 3, 0, 4], [3, 2, 1, 0, 4],
+                [2, 3, 1, 0, 4], [1, 3, 2, 0, 4], [3, 1, 2, 0, 4],
+                [3, 0, 2, 1, 4], [0, 3, 2, 1, 4], [2, 3, 0, 1, 4],
+                [3, 2, 0, 1, 4], [0, 2, 3, 1, 4], [2, 0, 3, 1, 4],
+                [1, 0, 3, 2, 4], [0, 1, 3, 2, 4], [3, 1, 0, 2, 4],
+                [1, 3, 0, 2, 4], [0, 3, 1, 2, 4], [3, 0, 1, 2, 4],
+                [4, 0, 1, 2, 3], [0, 4, 1, 2, 3], [1, 4, 0, 2, 3],
+                [4, 1, 0, 2, 3], [0, 1, 4, 2, 3], [1, 0, 4, 2, 3],
+                [1, 0, 2, 4, 3], [0, 1, 2, 4, 3], [2, 1, 0, 4, 3],
+                [1, 2, 0, 4, 3], [0, 2, 1, 4, 3], [2, 0, 1, 4, 3],
+                [2, 4, 1, 0, 3], [4, 2, 1, 0, 3], [1, 2, 4, 0, 3],
+                [2, 1, 4, 0, 3], [4, 1, 2, 0, 3], [1, 4, 2, 0, 3],
+                [0, 4, 2, 1, 3], [4, 0, 2, 1, 3], [2, 0, 4, 1, 3],
+                [0, 2, 4, 1, 3], [4, 2, 0, 1, 3], [2, 4, 0, 1, 3],
+                [3, 4, 0, 1, 2], [4, 3, 0, 1, 2], [0, 3, 4, 1, 2],
+                [3, 0, 4, 1, 2], [4, 0, 3, 1, 2], [0, 4, 3, 1, 2],
+                [0, 4, 1, 3, 2], [4, 0, 1, 3, 2], [1, 0, 4, 3, 2],
+                [0, 1, 4, 3, 2], [4, 1, 0, 3, 2], [1, 4, 0, 3, 2],
+                [1, 3, 0, 4, 2], [3, 1, 0, 4, 2], [0, 1, 3, 4, 2],
+                [1, 0, 3, 4, 2], [3, 0, 1, 4, 2], [0, 3, 1, 4, 2],
+                [4, 3, 1, 0, 2], [3, 4, 1, 0, 2], [1, 4, 3, 0, 2],
+                [4, 1, 3, 0, 2], [3, 1, 4, 0, 2], [1, 3, 4, 0, 2],
+                [2, 3, 4, 0, 1], [3, 2, 4, 0, 1], [4, 2, 3, 0, 1],
+                [2, 4, 3, 0, 1], [3, 4, 2, 0, 1], [4, 3, 2, 0, 1],
+                [4, 3, 0, 2, 1], [3, 4, 0, 2, 1], [0, 4, 3, 2, 1],
+                [4, 0, 3, 2, 1], [3, 0, 4, 2, 1], [0, 3, 4, 2, 1],
+                [0, 2, 4, 3, 1], [2, 0, 4, 3, 1], [4, 0, 2, 3, 1],
+                [0, 4, 2, 3, 1], [2, 4, 0, 3, 1], [4, 2, 0, 3, 1],
+                [3, 2, 0, 4, 1], [2, 3, 0, 4, 1], [0, 3, 2, 4, 1],
+                [3, 0, 2, 4, 1], [2, 0, 3, 4, 1], [0, 2, 3, 4, 1],
+                [1, 2, 3, 4, 0], [2, 1, 3, 4, 0], [3, 1, 2, 4, 0],
+                [1, 3, 2, 4, 0], [2, 3, 1, 4, 0], [3, 2, 1, 4, 0],
+                [3, 2, 4, 1, 0], [2, 3, 4, 1, 0], [4, 3, 2, 1, 0],
+                [3, 4, 2, 1, 0], [2, 4, 3, 1, 0], [4, 2, 3, 1, 0],
+                [4, 1, 3, 2, 0], [1, 4, 3, 2, 0], [3, 4, 1, 2, 0],
+                [4, 3, 1, 2, 0], [1, 3, 4, 2, 0], [3, 1, 4, 2, 0],
+                [2, 1, 4, 3, 0], [1, 2, 4, 3, 0], [4, 2, 1, 3, 0],
+                [2, 4, 1, 3, 0], [1, 4, 2, 3, 0], [4, 1, 2, 3, 0]
+            ]
+            
+            let topPowerBands = await _calculateMaximizeTargetBandPower(
+                maxResults: maxResults * 10
+            )
+            
+            let acc = self.songInformation!.accuracy
+            let scoreUserFactor = 1.1 * acc + 0.8 * (1 - acc)
+            let notes = self.songInformation!.chart.reduce(into: 0) {
+                switch $1 {
+                case .single, .long, .slide, .directional:
+                    $0 += 1
+                default: break
+                }
             }
+            let noteBaseFactor = (3 + 0.03 * Double(self.songInformation!.difficultyLevel - 5)) / Double(notes)
+            
+            var results: [TeamResult] = []
+            
+            if !isHardwareAccelerationDisabled && _setupForHardwareAccelerationIfNeeded() {
+                #if canImport(Metal)
+                struct HABandCard {
+                    var skillEffectValue: Int32
+                    var skillDuration: Float
+                    var bandPower: Int32
+                }
+                struct HAChartElement {
+                    var type: UInt8
+                    var beat: Float
+                };
+                struct HAMaxScoreResult {
+                    var index1: UInt32
+                    var index2: UInt32
+                    var index3: UInt32
+                    var score: Float
+                }
+                
+                let calcFunc = self.haLibrary.makeFunction(name: "maxScore")!
+                let calcFuncPSO = try! await self.haDevice.makeComputePipelineState(function: calcFunc)
+                let calcCommandBuffer = self.haCommandQueue.makeCommandBuffer()!
+                let calcEncoder = calcCommandBuffer.makeComputeCommandEncoder()!
+                calcEncoder.setComputePipelineState(calcFuncPSO)
+                
+                let _flattenBandCards = topPowerBands.flatMap {
+                    let bp = $0.targetValue
+                    return $0.cards.map { card in
+                        let skill = self.allSkills.first { $0.id == card.skillID }!
+                        let cardSettings = self.cards.first { $0.card.id == card.id }!
+                        var effectValue = 0
+                        for (type, effect) in skill.activationEffect.activateEffectTypes {
+                            switch type {
+                            case .score,
+                                    .scoreOverLife,
+                                    .scoreUnderLife,
+                                    .scoreContinuedNoteJudge,
+                                    .scoreOnlyPerfect,
+                                    .scoreRateUpWithPerfect,
+                                    .scoreUnderGreatHalf:
+                                effectValue += effect.activateEffectValue[0]
+                            default: break
+                            }
+                        }
+                        return HABandCard(
+                            skillEffectValue: Int32(effectValue),
+                            skillDuration: Float(skill.duration[cardSettings.skillLevel]),
+                            bandPower: Int32(bp)
+                        )
+                    }
+                }
+                let bandCardBuffer = unsafe _flattenBandCards.withUnsafeBytes { ptr in
+                    unsafe self.haDevice.makeBuffer(
+                        bytes: ptr.baseAddress!,
+                        length: ptr.count,
+                        options: .storageModeShared
+                    )
+                }
+                let allSkillOrderBuffer = unsafe possibleSkillOrders.flatMap {
+                    $0.map { Int32($0) }
+                }.withUnsafeBytes { ptr in
+                    unsafe self.haDevice.makeBuffer(
+                        bytes: ptr.baseAddress!,
+                        length: ptr.count,
+                        options: .storageModeShared
+                    )
+                }
+                var _bpm = 0
+                let _flattenChart = self.songInformation!.chart.compactMap {
+                    switch $0 {
+                    case .bpm(let bpmData):
+                        _bpm = bpmData.bpm
+                    case .single(let singleData):
+                        return [HAChartElement(
+                            type: 0,
+                            beat: Float(singleData.beat)
+                        )]
+                    case .long(let longData):
+                        return longData.connections.map {
+                            HAChartElement(
+                                type: 1,
+                                beat: Float($0.beat)
+                            )
+                        }
+                    case .slide(let slideData):
+                        return slideData.connections.map {
+                            HAChartElement(
+                                type: 2,
+                                beat: Float($0.beat)
+                            )
+                        }
+                    case .directional(let directionalData):
+                        return [HAChartElement(
+                            type: 3,
+                            beat: Float(directionalData.beat)
+                        )]
+                    default: break
+                    }
+                    return nil
+                }.flatMap { $0 }
+                let chartBuffer = unsafe _flattenChart.withUnsafeBytes { ptr in
+                    unsafe self.haDevice.makeBuffer(
+                        bytes: ptr.baseAddress!,
+                        length: ptr.count,
+                        options: .storageModeShared
+                    )
+                }
+                let feverBeatRangeBuffer = unsafe self.songInformation!.chart
+                    .reduce(into: Array(repeating: Float(0), count: 2)) {
+                        if case .system(let systemData) = $1 {
+                            if systemData.data == "cmd_fever_start.wav" {
+                                $0[0] = Float(systemData.beat)
+                            } else if systemData.data == "cmd_fever_end.wav" {
+                                $0[1] = Float(systemData.beat)
+                            }
+                        }
+                    }.withUnsafeBytes { ptr in
+                        unsafe self.haDevice.makeBuffer(
+                            bytes: ptr.baseAddress!,
+                            length: ptr.count,
+                            options: .storageModeShared
+                        )
+                    }
+                let skillStartBeatBuffer = unsafe self.songInformation!.chart
+                    .reduce(into: Array<Float>()) {
+                        if case .single(let singleData) = $1, singleData.skill {
+                            $0.append(Float(singleData.beat))
+                        }
+                    }.withUnsafeBytes { ptr in
+                        unsafe self.haDevice.makeBuffer(
+                            bytes: ptr.baseAddress!,
+                            length: ptr.count,
+                            options: .storageModeShared
+                        )
+                    }
+                let flagsBuffer = unsafe [
+                    Float(_flattenChart.count),
+                    Float(scoreUserFactor),
+                    Float(notes),
+                    Float(noteBaseFactor),
+                    Float(_bpm),
+                    Float(topPowerBands.count),
+                    Float(possibleSkillOrders.count)
+                ].withUnsafeBytes { ptr in
+                    unsafe self.haDevice.makeBuffer(
+                        bytes: ptr.baseAddress!,
+                        length: ptr.count,
+                        options: .storageModeShared
+                    )
+                }
+                let resultBuffer = self.haDevice.makeBuffer(
+                    length: topPowerBands.count * possibleSkillOrders.count * 5,
+                    options: .storageModeShared
+                )
+                
+                calcEncoder.setBuffer(bandCardBuffer, offset: 0, index: 0)
+                calcEncoder.setBuffer(allSkillOrderBuffer, offset: 0, index: 1)
+                calcEncoder.setBuffer(chartBuffer, offset: 0, index: 2)
+                calcEncoder.setBuffer(feverBeatRangeBuffer, offset: 0, index: 3)
+                calcEncoder.setBuffer(skillStartBeatBuffer, offset: 0, index: 4)
+                calcEncoder.setBuffer(flagsBuffer, offset: 0, index: 5)
+                calcEncoder.setBuffer(resultBuffer, offset: 0, index: 6)
+                
+                let gridSize = MTLSizeMake(
+                    topPowerBands.count,
+                    possibleSkillOrders.count,
+                    5
+                )
+                let threadGroupSize = MTLSizeMake(16, 8, 2)
+                calcEncoder.dispatchThreads(gridSize, threadsPerThreadgroup: threadGroupSize)
+                
+                calcEncoder.endEncoding()
+                calcCommandBuffer.commit()
+                await calcCommandBuffer.completed()
+                
+                let haResults = unsafe Array(
+                    UnsafeBufferPointer(
+                        start: resultBuffer!.contents().bindMemory(
+                            to: HAMaxScoreResult.self,
+                            capacity: resultBuffer!.length / MemoryLayout<HAMaxScoreResult>.stride
+                        ),
+                        count: resultBuffer!.length / MemoryLayout<HAMaxScoreResult>.stride
+                    )
+                )
+                results = haResults.sorted { $0.score > $1.score }.prefix(maxResults).map {
+                    .init(
+                        cards: topPowerBands[Int($0.index1)].cards,
+                        areaItems: topPowerBands[Int($0.index1)].areaItems,
+                        targetValue: Int($0.score)
+                    )
+                }
+                #endif // canImport(Metal)
+            } else {
+                for band in topPowerBands {
+                    var bandResults: [([Int], Double)] = []
+                    for skillOrder in possibleSkillOrders {
+                        for centerIndex in 0..<5 {
+                            var score = 0.0
+                            var skillSelector = 0
+                            var bpm = 0.0
+                            var fever = false
+                            var currentSkill: DoriAPI.Skills.Skill?
+                            var skillEndBeat = 0.0
+                            
+                            func activateNextSkill(at beat: Double) {
+                                let card: DoriAPI.Cards.PreviewCard
+                                if skillSelector < skillOrder.count {
+                                    card = band.cards[skillOrder[skillSelector]]
+                                } else {
+                                    card = band.cards[centerIndex]
+                                }
+                                let cardSettings = self.cards.first { $0.card.id == card.id }!
+                                currentSkill = allSkills.first {
+                                    $0.id == card.skillID
+                                }!
+                                let duration = currentSkill!.duration[cardSettings.skillLevel]
+                                skillEndBeat = beat + duration / 60 * bpm
+                                skillSelector += 1
+                            }
+                            func addScore() {
+                                var skillBonus = 1.0
+                                if let currentSkill {
+                                    for (type, effect) in currentSkill.activationEffect.activateEffectTypes {
+                                        switch type {
+                                        case .score,
+                                                .scoreOverLife,
+                                                .scoreUnderLife,
+                                                .scoreContinuedNoteJudge,
+                                                .scoreOnlyPerfect,
+                                                .scoreRateUpWithPerfect,
+                                                .scoreUnderGreatHalf:
+                                            skillBonus += Double(effect.activateEffectValue[0] / 100)
+                                        default: break
+                                        }
+                                    }
+                                }
+                                score += Double(band.targetValue) * noteBaseFactor * skillBonus * (fever ? 2 : 1) * scoreUserFactor
+                            }
+                            
+                            for chartElement in self.songInformation!.chart {
+                                switch chartElement {
+                                case .bpm(let bpmData):
+                                    bpm = Double(bpmData.bpm)
+                                case .system(let systemData):
+                                    if systemData.data == "cmd_fever_start.wav" {
+                                        fever = true
+                                    } else if systemData.data == "cmd_fever_end.wav" {
+                                        fever = false
+                                    }
+                                case .single(let singleData):
+                                    if singleData.beat > skillEndBeat {
+                                        currentSkill = nil
+                                    }
+                                    if singleData.skill {
+                                        activateNextSkill(at: singleData.beat)
+                                    }
+                                    addScore()
+                                case .long(let longData):
+                                    for conn in longData.connections {
+                                        if conn.beat > skillEndBeat {
+                                            currentSkill = nil
+                                        }
+                                        addScore()
+                                    }
+                                case .slide(let slideData):
+                                    for conn in slideData.connections {
+                                        if conn.beat > skillEndBeat {
+                                            currentSkill = nil
+                                        }
+                                        addScore()
+                                    }
+                                case .directional(let directionalData):
+                                    if directionalData.beat > skillEndBeat {
+                                        currentSkill = nil
+                                    }
+                                    addScore()
+                                }
+                            }
+                            
+                            bandResults.append((skillOrder, score))
+                        }
+                    }
+                    bandResults.sort { $0.1 > $1.1 }
+                    results.append(.init(
+                        cards: band.cards,
+                        areaItems: band.areaItems,
+                        targetValue: Int(bandResults[0].1)
+                    ))
+                }
+            }
+            
+            return Array(results.sorted { $0.targetValue > $1.targetValue }.prefix(maxResults))
         }
         
         private func groupedAreaItems() -> [[AreaItemInformation]] {
@@ -403,6 +745,73 @@ extension DoriFrontend {
             }
             
             return result.filter { !$0.isEmpty }
+        }
+        
+        private func performFastCombinations<T>(
+            from input: [T],
+            size: Int,
+            handler: ([T]) -> Void
+        ) {
+            var buffer = [T](repeating: input[0], count: size)
+            func backtrack(start: Int, pos: Int) {
+                if pos == size {
+                    handler(buffer)
+                    return
+                }
+                for i in start..<(input.count - (size - pos) + 1) {
+                    buffer[pos] = input[i]
+                    backtrack(start: i + 1, pos: pos + 1)
+                }
+            }
+            backtrack(start: 0, pos: 0)
+        }
+        private func combinations<T>(for input: [T], size: Int) -> [[Int]] {
+            var result: [[Int]] = []
+            var buffer = [Int](repeating: 0, count: size)
+            
+            func backtrack(start: Int, pos: Int) {
+                if pos == size {
+                    result.append(buffer)
+                    return
+                }
+                
+                for i in start..<(input.count - (size - pos) + 1) {
+                    buffer[pos] = i
+                    backtrack(start: i + 1, pos: pos + 1)
+                }
+            }
+            
+            backtrack(start: 0, pos: 0)
+            return result
+        }
+        private func permutations<T>(for input: [T]) -> [[T]] {
+            var result: [[T]] = []
+            var current: [T] = []
+            var used = Array(repeating: false, count: input.count)
+            
+            func backtrack() {
+                if current.count == input.count {
+                    result.append(current)
+                    return
+                }
+                
+                for i in 0..<input.count {
+                    if used[i] {
+                        continue
+                    }
+                    
+                    used[i] = true
+                    current.append(input[i])
+                    
+                    backtrack()
+                    
+                    current.removeLast()
+                    used[i] = false
+                }
+            }
+            
+            backtrack()
+            return result
         }
     }
 }
@@ -493,17 +902,17 @@ extension DoriFrontend.TeamBuilder {
     }
     
     public struct SongInformation: Sendable, Hashable {
-        public var song: DoriAPI.Songs.PreviewSong
-        public var difficulty: DoriAPI.Songs.DifficultyType
+        public var chart: [DoriAPI.Songs.Chart]
+        public var difficultyLevel: Int
         public var accuracy: Double
         
         public init(
-            song: DoriAPI.Songs.PreviewSong,
-            difficulty: DoriAPI.Songs.DifficultyType,
+            chart: [DoriAPI.Songs.Chart],
+            difficultyLevel: Int,
             accuracy: Double
         ) {
-            self.song = song
-            self.difficulty = difficulty
+            self.chart = chart
+            self.difficultyLevel = difficultyLevel
             self.accuracy = accuracy
         }
     }
@@ -541,6 +950,12 @@ extension DoriFrontend.TeamBuilder {
             self.item = item
             self.level = level
         }
+    }
+    
+    public struct TeamResult: Sendable, Hashable {
+        public var cards: [DoriAPI.Cards.PreviewCard]
+        public var areaItems: [AreaItemInformation]
+        public var targetValue: Int
     }
     
     public enum MaximizeCalculationTarget: Sendable, Hashable {
