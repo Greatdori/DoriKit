@@ -175,10 +175,12 @@ extension DoriFrontend {
                 let calcFuncPSO = try! await self.haDevice.makeComputePipelineState(function: calcFunc)
                 
                 for targetAttr in attributes {
-                    let candidateChars = topCardsByAttr.compactMap { (charID, attrs) -> (Int, (CardInformation, DoriAPI.Cards.Stat))? in
-                        guard let data = attrs[targetAttr] else { return nil }
-                        return (charID, data)
-                    }.sorted { $0.1.1.total > $1.1.1.total }
+                    let candidateChars = topCardsByAttr
+                        .sorted { $0.key < $1.key }
+                        .compactMap { (charID, attrs) -> (Int, (CardInformation, DoriAPI.Cards.Stat))? in
+                            guard let data = attrs[targetAttr] else { return nil }
+                            return (charID, data)
+                        }
                     
                     guard candidateChars.count >= 5 else { continue }
                     
@@ -355,7 +357,6 @@ extension DoriFrontend {
                     calcCommandBuffer.commit()
                     await calcCommandBuffer.completed()
                     
-                    // AI-generated, read before release
                     func getTopK(from array: [HAMaxBandPowerResult], k: Int) -> [HAMaxBandPowerResult] {
                         func sinkDown(_ heap: inout [HAMaxBandPowerResult], index: Int) {
                             var parent = index
@@ -425,10 +426,12 @@ extension DoriFrontend {
                 #endif // canImport(Metal)
             } else {
                 for targetAttr in attributes {
-                    let candidateChars = topCardsByAttr.compactMap { (charID, attrs) -> (Int, (CardInformation, DoriAPI.Cards.Stat))? in
-                        guard let data = attrs[targetAttr] else { return nil }
-                        return (charID, data)
-                    }.sorted { $0.1.1.total > $1.1.1.total }
+                    let candidateChars = topCardsByAttr
+                        .sorted { $0.key < $1.key }
+                        .compactMap { (charID, attrs) -> (Int, (CardInformation, DoriAPI.Cards.Stat))? in
+                            guard let data = attrs[targetAttr] else { return nil }
+                            return (charID, data)
+                        }
                     
                     guard candidateChars.count >= 5 else { continue }
                     
@@ -711,7 +714,7 @@ extension DoriFrontend {
                     )
                 }
                 let resultBuffer = self.haDevice.makeBuffer(
-                    length: topPowerBands.count * possibleSkillOrders.count * 5,
+                    length: topPowerBands.count * possibleSkillOrders.count * 5 * MemoryLayout<HAMaxScoreResult>.stride,
                     options: .storageModeShared
                 )
 
