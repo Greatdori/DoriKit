@@ -86,6 +86,7 @@ struct MaxScoreBandCard {
 struct ChartElement {
     uint8_t type;
     float beat;
+    bool skill;
 };
 struct MaxScoreResult {
     uint index1;
@@ -94,50 +95,55 @@ struct MaxScoreResult {
     float score;
 };
 
-template<typename T>
-T closest_less_than(constant T* data, uint length, T x);
-
 kernel void maxScore(device const MaxScoreBandCard* bandCards,
                      constant const int* possibleSkillOrders,
                      device const ChartElement* charts,
                      constant const float* feverBeatRange,
-                     constant const float* skillStartBeats,
+                     constant const int* skillStartIndexs,
                      constant const float* flags,
                      device MaxScoreResult* results,
                      uint3 index [[thread_position_in_grid]]) {
     device const MaxScoreBandCard* thisBandCards = bandCards + index[0] * 5;
     constant const int* skillOrder = possibleSkillOrders + index[1] * 5;
     
+    float skillEndBeats[6];
+    for (int i = 0; i < 6; i++) {
+        constant const int* idx = &skillStartIndexs[i];
+        device const ChartElement* ce = &charts[*idx];
+        float beat = ce->beat;
+        int cardIdx = i < 5 ? skillOrder[i] : index[2];
+        device const MaxScoreBandCard* card = &thisBandCards[cardIdx];
+        skillEndBeats[i] = beat + card->skillDuration / 60 * flags[4];
+    }
+    
     int chartElementCount = int(flags[0]);
-    float2 skillSelector = float2(0, 0); // (index, triggerBeat)
     float score = 0;
     for (int i = 0; i < chartElementCount; i++) {
         device const ChartElement* chartElement = &charts[i];
         
         float skillBonus = 1.0;
-        const float skillStartBeat = closest_less_than(skillStartBeats, 6, chartElement->beat);
-        
-        // 3646056
-        
-        int cardIdx;
-        if (skillSelector[0] < 5) {
-            cardIdx = skillOrder[int(skillSelector[0])];
-        } else {
-            cardIdx = index[2];
+        int skillStartIndex = -1;
+        for (int j = 0; j < 6; j++) {
+            if (skillStartIndexs[j] <= i) {
+                skillStartIndex = j;
+            }
         }
-        device const MaxScoreBandCard* card = &thisBandCards[cardIdx];
-        const float skillEndBeat = skillStartBeat + card->skillDuration / 60 * flags[4];
         
-        if (skillEndBeat <= chartElement->beat) {
+        if (skillStartIndex > -1 && skillEndBeats[skillStartIndex] > chartElement->beat) {
+            int cardIdx;
+            if (skillStartIndex < 5) {
+                cardIdx = skillOrder[skillStartIndex];
+            } else {
+                cardIdx = index[2];
+            }
+            device const MaxScoreBandCard* card = &thisBandCards[cardIdx];
             skillBonus += float(card->skillEffectValue) / 100;
         }
         
-        if (skillStartBeat == chartElement->beat && skillSelector[1] != skillStartBeat) {
-            skillSelector[0] += 1;
-            skillSelector[1] = skillStartBeat;
+        float feverBonus = 1.0;
+        if (feverBeatRange[0] < chartElement->beat && feverBeatRange[1] > chartElement->beat) {
+            feverBonus = 2.0;
         }
-        
-        float feverBonus = step(chartElement->beat, feverBeatRange[0]) * step(feverBeatRange[1], chartElement->beat) + 1;
         
         score += float(thisBandCards[0].bandPower) * flags[3] * skillBonus * feverBonus * flags[1];
     }
@@ -145,25 +151,4 @@ kernel void maxScore(device const MaxScoreBandCard* bandCards,
     results[index.z * (uint(flags[5]) * uint(flags[6])) + index.y * uint(flags[5]) + index.x] = MaxScoreResult {
         index[0], index[1], index[2], score
     };
-}
-
-// Helpers
-template<typename T>
-T closest_less_than(constant T* data, uint length, T x) {
-    int low = 0;
-    int high = length - 1;
-    int result_idx = -1;
-
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        
-        if (data[mid] <= x) {
-            result_idx = mid;
-            low = mid + 1;
-        } else {
-            high = mid - 1;
-        }
-    }
-
-    return (result_idx != -1) ? data[result_idx] : 0;
 }

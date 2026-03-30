@@ -574,6 +574,7 @@ extension DoriFrontend {
                 struct HAChartElement {
                     var type: UInt8
                     var beat: Float
+                    var skill: Bool
                 };
                 struct HAMaxScoreResult {
                     var index1: UInt32
@@ -631,38 +632,48 @@ extension DoriFrontend {
                     )
                 }
                 var _bpm = 0
-                let _flattenChart = self.songInformation!.chart.compactMap {
-                    switch $0 {
+                let _flattenChart = self.songInformation!.chart.enumerated().compactMap {
+                    switch $1 {
                     case .bpm(let bpmData):
                         _bpm = bpmData.bpm
                     case .single(let singleData):
                         return [HAChartElement(
                             type: 0,
-                            beat: Float(singleData.beat)
+                            beat: Float(singleData.beat),
+                            skill: singleData.skill
                         )]
                     case .long(let longData):
                         return longData.connections.map {
                             HAChartElement(
                                 type: 1,
-                                beat: Float($0.beat)
+                                beat: Float($0.beat),
+                                skill: $0.skill
                             )
                         }
                     case .slide(let slideData):
                         return slideData.connections.map {
                             HAChartElement(
                                 type: 2,
-                                beat: Float($0.beat)
+                                beat: Float($0.beat),
+                                skill: false
                             )
                         }
                     case .directional(let directionalData):
                         return [HAChartElement(
                             type: 3,
-                            beat: Float(directionalData.beat)
+                            beat: Float(directionalData.beat),
+                            skill: false
                         )]
                     default: break
                     }
                     return nil
                 }.flatMap { $0 }
+                var skillStartIndexs: [Int32] = []
+                for (index, element) in _flattenChart.enumerated() {
+                    if element.skill {
+                        skillStartIndexs.append(Int32(index))
+                    }
+                }
                 let chartBuffer = unsafe _flattenChart.withUnsafeBytes { ptr in
                     unsafe self.haDevice.makeBuffer(
                         bytes: ptr.baseAddress!,
@@ -686,18 +697,13 @@ extension DoriFrontend {
                             options: .storageModeShared
                         )
                     }
-                let skillStartBeatBuffer = unsafe self.songInformation!.chart
-                    .reduce(into: Array<Float>()) {
-                        if case .single(let singleData) = $1, singleData.skill {
-                            $0.append(Float(singleData.beat))
-                        }
-                    }.withUnsafeBytes { ptr in
-                        unsafe self.haDevice.makeBuffer(
-                            bytes: ptr.baseAddress!,
-                            length: ptr.count,
-                            options: .storageModeShared
-                        )
-                    }
+                let skillStartIndexBuffer = unsafe skillStartIndexs.withUnsafeBytes { ptr in
+                    unsafe self.haDevice.makeBuffer(
+                        bytes: ptr.baseAddress!,
+                        length: ptr.count,
+                        options: .storageModeShared
+                    )
+                }
                 let flagsBuffer = unsafe [
                     Float(_flattenChart.count),
                     Float(scoreUserFactor),
@@ -722,7 +728,7 @@ extension DoriFrontend {
                 calcEncoder.setBuffer(allSkillOrderBuffer, offset: 0, index: 1)
                 calcEncoder.setBuffer(chartBuffer, offset: 0, index: 2)
                 calcEncoder.setBuffer(feverBeatRangeBuffer, offset: 0, index: 3)
-                calcEncoder.setBuffer(skillStartBeatBuffer, offset: 0, index: 4)
+                calcEncoder.setBuffer(skillStartIndexBuffer, offset: 0, index: 4)
                 calcEncoder.setBuffer(flagsBuffer, offset: 0, index: 5)
                 calcEncoder.setBuffer(resultBuffer, offset: 0, index: 6)
                 
@@ -798,7 +804,7 @@ extension DoriFrontend {
                                                         .scoreOnlyPerfect,
                                                         .scoreRateUpWithPerfect,
                                                         .scoreUnderGreatHalf:
-                                                    skillBonus += Double(effect.activateEffectValue[0] / 100)
+                                                    skillBonus += Double(effect.activateEffectValue[0]) / 100
                                                 default: break
                                                 }
                                             }
@@ -828,6 +834,9 @@ extension DoriFrontend {
                                             for conn in longData.connections {
                                                 if conn.beat > skillEndBeat {
                                                     currentSkill = nil
+                                                }
+                                                if conn.skill {
+                                                    activateNextSkill(at: conn.beat)
                                                 }
                                                 addScore()
                                             }

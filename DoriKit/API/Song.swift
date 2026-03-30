@@ -551,7 +551,8 @@ extension DoriAPI {
                                     .init(
                                         lane: $0.1["lane"].doubleValue,
                                         beat: $0.1["beat"].doubleValue,
-                                        flick: $0.1["flick"].bool ?? false
+                                        flick: $0.1["flick"].bool ?? false,
+                                        skill: $0.1["skill"].bool ?? false
                                     )
                                 }
                             )
@@ -897,6 +898,7 @@ extension DoriAPI.Songs {
                 public var lane: Double
                 public var beat: Double
                 public var flick: Bool
+                public var skill: Bool
             }
         }
         public struct SlideData: Sendable, Hashable, DoriCache.Cacheable {
