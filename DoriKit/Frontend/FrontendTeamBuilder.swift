@@ -575,6 +575,7 @@ extension DoriFrontend {
                     var type: UInt8
                     var beat: Float
                     var skill: Bool
+                    var fever: Bool
                 };
                 struct HAMaxScoreResult {
                     var index1: UInt32
@@ -632,22 +633,31 @@ extension DoriFrontend {
                     )
                 }
                 var _bpm = 0
+                var _nextItemFever = false
                 let _flattenChart = self.songInformation!.chart.enumerated().compactMap {
                     switch $1 {
                     case .bpm(let bpmData):
                         _bpm = bpmData.bpm
+                    case .system(let systemData):
+                        if systemData.data == "cmd_fever_start.wav" {
+                            _nextItemFever = true
+                        } else if systemData.data == "cmd_fever_end.wav" {
+                            _nextItemFever = false
+                        }
                     case .single(let singleData):
                         return [HAChartElement(
                             type: 0,
                             beat: Float(singleData.beat),
-                            skill: singleData.skill
+                            skill: singleData.skill,
+                            fever: _nextItemFever
                         )]
                     case .long(let longData):
                         return longData.connections.map {
                             HAChartElement(
                                 type: 1,
                                 beat: Float($0.beat),
-                                skill: $0.skill
+                                skill: $0.skill,
+                                fever: _nextItemFever
                             )
                         }
                     case .slide(let slideData):
@@ -655,16 +665,17 @@ extension DoriFrontend {
                             HAChartElement(
                                 type: 2,
                                 beat: Float($0.beat),
-                                skill: false
+                                skill: false,
+                                fever: _nextItemFever
                             )
                         }
                     case .directional(let directionalData):
                         return [HAChartElement(
                             type: 3,
                             beat: Float(directionalData.beat),
-                            skill: false
+                            skill: false,
+                            fever: _nextItemFever
                         )]
-                    default: break
                     }
                     return nil
                 }.flatMap { $0 }
@@ -681,22 +692,6 @@ extension DoriFrontend {
                         options: .storageModeShared
                     )
                 }
-                let feverBeatRangeBuffer = unsafe self.songInformation!.chart
-                    .reduce(into: Array(repeating: Float(0), count: 2)) {
-                        if case .system(let systemData) = $1 {
-                            if systemData.data == "cmd_fever_start.wav" {
-                                $0[0] = Float(systemData.beat)
-                            } else if systemData.data == "cmd_fever_end.wav" {
-                                $0[1] = Float(systemData.beat)
-                            }
-                        }
-                    }.withUnsafeBytes { ptr in
-                        unsafe self.haDevice.makeBuffer(
-                            bytes: ptr.baseAddress!,
-                            length: ptr.count,
-                            options: .storageModeShared
-                        )
-                    }
                 let skillStartIndexBuffer = unsafe skillStartIndexs.withUnsafeBytes { ptr in
                     unsafe self.haDevice.makeBuffer(
                         bytes: ptr.baseAddress!,
@@ -727,10 +722,9 @@ extension DoriFrontend {
                 calcEncoder.setBuffer(bandCardBuffer, offset: 0, index: 0)
                 calcEncoder.setBuffer(allSkillOrderBuffer, offset: 0, index: 1)
                 calcEncoder.setBuffer(chartBuffer, offset: 0, index: 2)
-                calcEncoder.setBuffer(feverBeatRangeBuffer, offset: 0, index: 3)
-                calcEncoder.setBuffer(skillStartIndexBuffer, offset: 0, index: 4)
-                calcEncoder.setBuffer(flagsBuffer, offset: 0, index: 5)
-                calcEncoder.setBuffer(resultBuffer, offset: 0, index: 6)
+                calcEncoder.setBuffer(skillStartIndexBuffer, offset: 0, index: 3)
+                calcEncoder.setBuffer(flagsBuffer, offset: 0, index: 4)
+                calcEncoder.setBuffer(resultBuffer, offset: 0, index: 5)
                 
                 let gridSize = MTLSizeMake(
                     topPowerBands.count,

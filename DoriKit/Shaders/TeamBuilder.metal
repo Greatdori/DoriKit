@@ -87,6 +87,7 @@ struct ChartElement {
     uint8_t type;
     float beat;
     bool skill;
+    bool fever;
 };
 struct MaxScoreResult {
     uint index1;
@@ -95,10 +96,11 @@ struct MaxScoreResult {
     float score;
 };
 
+#pragma METAL fp math_mode(safe)
+
 kernel void maxScore(device const MaxScoreBandCard* bandCards,
                      constant const int* possibleSkillOrders,
                      device const ChartElement* charts,
-                     constant const float* feverBeatRange,
                      constant const int* skillStartIndexs,
                      constant const float* flags,
                      device MaxScoreResult* results,
@@ -106,44 +108,29 @@ kernel void maxScore(device const MaxScoreBandCard* bandCards,
     device const MaxScoreBandCard* thisBandCards = bandCards + index[0] * 5;
     constant const int* skillOrder = possibleSkillOrders + index[1] * 5;
     
-    float skillEndBeats[6];
-    for (int i = 0; i < 6; i++) {
-        constant const int* idx = &skillStartIndexs[i];
-        device const ChartElement* ce = &charts[*idx];
-        float beat = ce->beat;
-        int cardIdx = i < 5 ? skillOrder[i] : index[2];
-        device const MaxScoreBandCard* card = &thisBandCards[cardIdx];
-        skillEndBeats[i] = beat + card->skillDuration / 60 * flags[4];
-    }
-    
     int chartElementCount = int(flags[0]);
+    int skillIdx = 0;
+    int currentSkillValue = 0;
+    float skillEndBeat = 0;
     float score = 0;
     for (int i = 0; i < chartElementCount; i++) {
         device const ChartElement* chartElement = &charts[i];
         
-        float skillBonus = 1.0;
-        int skillStartIndex = -1;
-        for (int j = 0; j < 6; j++) {
-            if (skillStartIndexs[j] <= i) {
-                skillStartIndex = j;
-            }
+        if (chartElement->beat + .1 >= skillEndBeat) {
+            currentSkillValue = 0;
         }
         
-        if (skillStartIndex > -1 && skillEndBeats[skillStartIndex] > chartElement->beat) {
-            int cardIdx;
-            if (skillStartIndex < 5) {
-                cardIdx = skillOrder[skillStartIndex];
-            } else {
-                cardIdx = index[2];
-            }
+        if (chartElement->skill) {
+            int cardIdx = skillIdx < 5 ? skillOrder[skillIdx] : index[2];
             device const MaxScoreBandCard* card = &thisBandCards[cardIdx];
-            skillBonus += float(card->skillEffectValue) / 100;
+            currentSkillValue = card->skillEffectValue;
+            skillEndBeat = chartElement->beat + card->skillDuration / 60.0f * flags[4];
+            skillIdx++;
         }
         
-        float feverBonus = 1.0;
-        if (feverBeatRange[0] < chartElement->beat && feverBeatRange[1] > chartElement->beat) {
-            feverBonus = 2.0;
-        }
+        float skillBonus = 1.0 + float(currentSkillValue) / 100;
+        
+        float feverBonus = chartElement->fever ? 2.0 : 1.0;
         
         score += float(thisBandCards[0].bandPower) * flags[3] * skillBonus * feverBonus * flags[1];
     }
@@ -152,3 +139,5 @@ kernel void maxScore(device const MaxScoreBandCard* bandCards,
         index[0], index[1], index[2], score
     };
 }
+
+#pragma METAL fp math_mode(fast)
