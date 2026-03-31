@@ -423,6 +423,8 @@ extension DoriFrontend {
                             }
                     )
                 }
+                #else
+                preconditionFailure()
                 #endif // canImport(Metal)
             } else {
                 for targetAttr in attributes {
@@ -754,6 +756,8 @@ extension DoriFrontend {
                         targetValue: Int($0.score)
                     )
                 }
+                #else
+                preconditionFailure()
                 #endif // canImport(Metal)
             } else {
                 return await withTaskGroup { group in
