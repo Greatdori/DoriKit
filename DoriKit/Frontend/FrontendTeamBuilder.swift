@@ -125,7 +125,10 @@ extension DoriFrontend {
                     centerSkill: centerSkill
                 )
             case .eventPoint:
-                fatalError("Not implemented")
+                return await _calculateMaximizeTargetEventPoint(
+                    maxResults: maxResults,
+                    centerSkill: centerSkill
+                )
             }
         }
         
@@ -875,6 +878,48 @@ extension DoriFrontend {
             }
         }
         
+        open func _calculateMaximizeTargetEventPoint(
+            maxResults: Int,
+            centerSkill: DoriAPI.Skills.Skill? = nil
+        ) async -> [TeamResult] {
+            // Event point calculation:
+            //
+            // ========== Formula 1 ==========
+            // basePt = switch eventType {
+            //     case .normal: 50
+            //     case .challengeLive: 20
+            //     case .liveGoals, .missionLive: 40
+            //     default: 0
+            // }
+            // selfScore = min(score, 1_500_000)
+            // multiLiveScore = min(totalScore - selfScore, 6_000_000)
+            // selfPt = selfScore / 25_000
+            // multiLivePt = multiLiveScore / 250_000
+            // ptResult = (basePt + selfPt + multiLivePt)
+            //                * eventBonus * liveBoostBonus
+            // cp = ptResult / 20
+            //
+            // --- CP Consumption ---
+            // basePt = 1000
+            // selfPt = score / 300
+            // ptResult = selfPt * (cpConsumption / 200)
+            //
+            // ========== Formula 2 ==========
+            // The same as Formula 1, except:
+            // selfScore =
+            //
+            // References:
+            // [0]: https://www.ptt.cc/bbs/BanG_Dream/M.1534679982.A.EBC.html
+            // [1]: ToolTeamBuilder.js from https://bestdori.com/
+            
+            let topScoreBands = await _calculateMaximizeTargetScore(
+                maxResults: maxResults * 10,
+                centerSkill: centerSkill
+            )
+            
+            preconditionFailure("Not implemented")
+        }
+        
         private func groupedAreaItems() -> [[AreaItemInformation]] {
             var result: [[AreaItemInformation]] = .init(
                 repeating: [],
@@ -914,25 +959,6 @@ extension DoriFrontend {
             }
             backtrack(start: 0, pos: 0)
         }
-        private func performGroupedCombinations<T>(
-            from input: [[T]],
-            handler: ([T]) -> Void
-        ) {
-            func combine(index: Int, currentPath: [T]) {
-                if index == input.count {
-                    handler(currentPath)
-                    return
-                }
-                
-                for item in input[index] {
-                    var newPath = currentPath
-                    newPath.append(item)
-                    combine(index: index + 1, currentPath: newPath)
-                }
-            }
-            
-            combine(index: 0, currentPath: [])
-        }
         private func combinations<T>(for input: [T], size: Int) -> [[Int]] {
             var result: [[Int]] = []
             var buffer = [Int](repeating: 0, count: size)
@@ -951,29 +977,6 @@ extension DoriFrontend {
             
             backtrack(start: 0, pos: 0)
             return result
-        }
-        private func groupedCombinations<T>(for input: [[T]]) -> [[(Int, Int)]] {
-            var allResults: [[(Int, Int)]] = []
-            var currentPath: [(Int, Int)] = []
-            
-            func backtrack(row: Int) {
-                if row == input.count {
-                    allResults.append(currentPath)
-                    return
-                }
-                
-                for col in 0..<input[row].count {
-                    currentPath.append((row, col))
-                    backtrack(row: row + 1)
-                    currentPath.removeLast()
-                }
-            }
-            
-            if !input.isEmpty {
-                backtrack(row: 0)
-            }
-            
-            return allResults
         }
         private func permutations<T>(for input: [T]) -> [[T]] {
             var result: [[T]] = []
@@ -1003,6 +1006,27 @@ extension DoriFrontend {
             
             backtrack()
             return result
+        }
+        
+        private func calcWithSoftCap(
+            _ t: Double,
+            _ e: Double,
+            _ a: [Double]
+        ) -> Double {
+            // ToolTeamBuilder.js from https://bestdori.com/
+            var t = t
+            var r = 0.0, s = 0
+            while s < a.count {
+                defer { s += 1 }
+                let n = a[s]
+                if t <= n {
+                    r += floor(t / e / (Double(s) + 1) * 100)
+                    break
+                }
+                t -= n
+                r += floor(n / e / (Double(s) + 1) * 100)
+            }
+            return floor(r / 100)
         }
     }
 }

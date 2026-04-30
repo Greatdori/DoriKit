@@ -13,7 +13,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire", from: "5.10.2"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON", from: "5.0.2"),
-        .package(url: "https://github.com/swift-library/swift-gyb", from: "0.0.1"),
+        .package(url: "https://github.com/swift-library/swift-gyb", from: "0.0.2"),
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "601.0.1")
     ],
     targets: [
@@ -42,7 +42,7 @@ let package = Package(
                 .unsafeFlags(["-enable-experimental-feature", "ClosureBodyMacro"])
             ],
             plugins: [
-                .plugin(name: "Gyb", package: "swift-gyb")
+                .plugin(name: "GybPlugin", package: "swift-gyb")
             ]
         ),
         .macro(
